@@ -1,0 +1,33 @@
+#model_obj format: obj objDirectory mtlDirectory texturesDirectory interactionRadius (optional)scale
+#player format: model_idx pos_x pos_y pos_z rot_x rot_y rot_z scale
+#object format: model_idx pos_x pos_y pos_z rot_x rot_y rot_z scale
+#behavObject format: object format: model_idx pos_x pos_y pos_z rot_x rot_y rot_z scale
+#level_model format: meshIndex
+#model_grid format: width height partitions_x partitions_y offset_y hexColour (generates GameObject)
+
+#mesh 0:
+#model_obj models/PiranhaFish/79f0_centred.obj models/PiranhaFish/79f0_centred.mtl models/PiranhaFish/ 0 1.1 0.001
+#model_obj models/Snorkel/7f78.obj models/Snorkel/7f78.mtl models/Snorkel/ 0 0.001
+model_obj models/cuccoo/cuccoo.obj models/cuccoo/cuccoo.mtl models/cuccoo/ 0 1.1 0.03
+
+#mesh 1:
+model_obj models/BG_FP/9cc8.obj models/BG_FP/9cc8.mtl models/BG_FP/ 0 1.0 0.1
+#model_obj models/SM/BG/9cb8.obj models/SM/BG/9cb8.mtl models/SM/BG/ 0 0.004
+
+#mesh 2:
+#model_obj models/BoxCrate/7590.obj models/BoxCrate/7590.mtl models/BoxCrate/ 1 0.01
+#model_obj models/Kokiri/KF.obj models/Kokiri/KF.mtl models/Kokiri/ 1 0 4
+model_obj models/SM/10510.obj models/SM/10510.mtl models/SM/ 1 0.0 0.004
+model_obj models/SM/B/10518.obj models/SM/B/10518.mtl models/SM/B/ 1 0.0 0.004
+
+#model_grid 10.0 10.0 25 25 0.0 FFFF00FF
+
+BG_model 1
+level_model 2
+level_model 3
+
+player 0 0.0 2.0 0.0 0.0 0.0 0.0 1.000
+object 0 0.0 8.0 0.0 0.0 0.0 0.0 5 RotateY
+#object 0 0.0 4.0 1.0 0.0 0.0 0.0 0.5
+#object 0 0.0 5.0 -1.0 0.0 0.0 0.0 0.5
+#object 0 1.0 5.0 0.0 0.0 0.0 0.0 0.5
