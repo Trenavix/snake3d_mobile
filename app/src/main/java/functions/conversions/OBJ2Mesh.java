@@ -1,4 +1,4 @@
-package functions;
+package functions.conversions;
 
 import android.os.Build;
 import android.util.Log;
@@ -12,14 +12,17 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
+import functions.OtherConstants;
 import graphics.Material;
 import graphics.Mesh;
 
 import org.apache.commons.lang3.ArrayUtils;
+import org.joml.Vector3f;
+
 public class OBJ2Mesh
 {
     @RequiresApi(api = Build.VERSION_CODES.N)
-    public static Mesh convertOBJToMesh(String[] obj, Material[] textures, float scale, float interactionRadius)
+    public static Mesh convertOBJToMesh(String[] obj, Material[] textures, float scale, float interactionRadius, Vector3f defaultNormal)
     {
         ArrayList<float[]> originalVertices = new ArrayList<float[]>();
         ArrayList<float[]> originalUVs = new ArrayList<float[]>();
@@ -39,14 +42,16 @@ public class OBJ2Mesh
                 case "g": //TODO: group?
                     break;
                 case "f": //Index
-                    //TODO: Support triangle stripping, not creating new verts for every triangle
                     for(int j=1; j<4; j++) //for each "word", or index
                     {
                         String[] idx = line[j].split("/"); //split at the /, OBJ format vtx/uv idx
                         float[] pos = originalVertices.get(Integer.parseInt(idx[0])-1); //1 indexed to 0 indexed
                         float[] uv = originalUVs.get(Integer.parseInt(idx[1])-1); //1 indexed to 0 indexed
                         float[] normal = new float[3];
-                        //if(idx.length > 2) originalNormals.get(Integer.parseInt(idx[2])-1);
+                        float[] vtx = new float[OtherConstants.vertexElements];
+                        if(idx.length > 2)
+                            normal = originalNormals.get(Integer.parseInt(idx[2])-1);
+                        else normal = new float[]{defaultNormal.x, defaultNormal.y, defaultNormal.z};
                         float[] color = new float[]{1f, 1f, 1f, 1f}; //1 indexed to 0 indexed
                         if(i < obj.length-1) //Make sure it is not the last line
                         {
@@ -54,27 +59,24 @@ public class OBJ2Mesh
                             if(nextLine[0].equals("#fvcolorindex"))
                                 color = originalColors.get(Integer.parseInt(nextLine[j])-1); //1 indexed to be 0 indexed
                         }
-                        float[] vtx = new float[OtherConstants.vertexElements];
                         for(int k=0; k < 3; k++)
                             vtx[k] = pos[k];
                         for(int k=0; k < 2; k++)
                             vtx[k+OtherConstants.vertUVOffset] = uv[k];
                         for(int k=0; k < 4; k++)
                             vtx[k+OtherConstants.vertColorOffset] = color[k];
+                        for(int k=0; k < 3; k++)
+                            vtx[k+OtherConstants.vertNormalOffset] = normal[k]; //TODO: Normals
                         Integer vtxIdx;
                         if(newVertsGrouped.size() > 100000) vtxIdx = checkForExistingVertexParallel(newVertsGrouped, vtx);
                         else vtxIdx = checkForExistingVertex(newVerts, vtx);
-                        //Todo: add normal to vertex structure
-                        //for(int k=0; k < 3; k++)
-                        //    newVerts.add(normal[k]);
                         if(vtxIdx == null)
                         {
                             for(float data: vtx) newVerts.add(data); //Add new vertex
                             vtxIdx = (newVerts.size()/OtherConstants.vertexElements)-1;
                             newVertsGrouped.put(vtxIdx, vtx);
-                            newIndices[currentIndex].add(vtxIdx);
                         }
-                        else newIndices[currentIndex].add(vtxIdx);
+                        newIndices[currentIndex].add(vtxIdx);
                     }
                     break;
                 case "o": //TODO: object
@@ -101,7 +103,10 @@ public class OBJ2Mesh
                     originalColors.add(color);
                     break;
                 case "vn":
-                    //TODO: Vertex normals
+                    float[] normal = new float[3];
+                    for(int j = 0; j < 3; j++)
+                        normal[j] = Float.parseFloat(line[j+1]); //+1 to skip the v
+                    originalNormals.add(normal);
                     break;
                 case "vt": //texCoords
                     float[] uv = new float[2];

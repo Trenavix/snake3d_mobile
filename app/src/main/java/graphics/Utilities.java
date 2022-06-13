@@ -20,57 +20,6 @@ import static functions.OtherConstants.*;
 
 public class Utilities
 {
-    public static VertexIndexBatch generateGridPoints(float width, float height, short partitions_x, short partitions_y, float position_y)
-    {
-        float partitionwidth = width / partitions_x;
-        float partitionheight = height / partitions_y;
-        partitions_x++; partitions_y++; //For border purposes
-        int pointcount = ((partitions_x)*2) + ((partitions_y)*2);
-        int[] indices = new int[pointcount];
-        float[] vertices = new float[pointcount*vertexElements]; //floats per vertex
-        for(int i=0; i<pointcount; i++) //Enum all indices
-        {
-            indices[i] = i;
-        }
-        for(int i=0; i<partitions_x; i++)
-        {
-            int idx = i*vertexElements*2; //floats per vertex, steps of two
-            float x = (partitionwidth * i) - (width/2);
-            vertices[idx] = x; //x
-            vertices[idx+1] = position_y; //y
-            vertices[idx+2] = height / 2; //z
-            for(int j=vertColorOffset; j<vertexElements; j++) vertices[idx+j] = 0.5f; //colour values
-            vertices[idx+vertexElements] = x; //x #2
-            vertices[idx+vertexElements+1] = position_y; //y
-            vertices[idx+vertexElements+2] = -height / 2; //z #2
-            for(int j=vertexElements+vertColorOffset; j<vertexElements*2; j++) vertices[idx+j] = 0.5f; //colour values
-        }
-        for(int i=0; i<partitions_y; i++)
-        {
-            int idx = (partitions_x*2*vertexElements) + (i*vertexElements*2); //y begins after the x vertices
-            float y = (partitionheight * i) - (height / 2);
-            vertices[idx] = width / 2; //x
-            vertices[idx+1] = position_y; //y
-            vertices[idx+2] = y; //z
-            for(int j=vertColorOffset; j<vertexElements; j++) vertices[idx+j] = 0.5f; //colour values
-            vertices[idx+vertexElements] = -width / 2; //x #2
-            vertices[idx+vertexElements+1] = position_y; //y
-            vertices[idx+vertexElements+2] = y; //z #2
-            for(int j=vertexElements+vertColorOffset; j<vertexElements*2; j++) vertices[idx+j] = 0.5f; //colour values
-        }
-        return new VertexIndexBatch(vertices, indices);
-    }
-    public static Mesh generateGridMesh(float width, float height, short partitions_x, short partitions_y, float position_y, int color)
-    {
-        VertexIndexBatch grid = generateGridPoints(width, height, partitions_x, partitions_y, position_y);
-        int[][] newIndices = new int[1][0];
-        newIndices[0] = grid.indices;
-        Bitmap texImage = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
-        texImage.setPixel(0, 0, color);
-        Material[] texList = new Material[1];
-        texList[0] = new Material(texImage, "null",0);
-        return new Mesh(grid.vertices, newIndices, texList, polygonType_LINE, null, 0.f);
-    }
     public static void perspectiveFrustrum(float[] matrix, float fov, float aspect, float zNear, float zFar) {
         float fH = (float) (Math.tan(fov / 360.0 * Math.PI) * zNear);
         float fW = fH * aspect;

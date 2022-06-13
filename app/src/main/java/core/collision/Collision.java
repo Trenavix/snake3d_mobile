@@ -8,6 +8,11 @@ import org.joml.Vector3f;
 
 import java.util.ArrayList;
 
+import core.Scene;
+import core.objects.GameObject;
+import graphics.Mesh;
+import graphics.Utilities;
+
 public class Collision
 {
     public static boolean spheresCollide(Vector3f pt1, Vector3f pt2, float radius1, float radius2)
@@ -18,49 +23,35 @@ public class Collision
         return (dif <= (radius1 + radius2));
     }
 
-    static float SignedVolume(Vector3f a, Vector3f b, Vector3f c, Vector3f d)
+    public static Vector3f rayIntersectsTriangle(Vector3f rayOrigin, Vector3f rayDestination, Vector3f[] vertices)
     {
-        Vector3f B = new Vector3f(b);
-        B.sub(a);
-        Vector3f C = new Vector3f(c);
-        C.sub(a);
-        B.cross(C);
-        Vector3f D = new Vector3f(d);
-        D.sub(a);
-        float dot = D.dot(B);
-        return (1.0f / 6.0f) * dot;
-    }
-
-    static boolean SameSign(float a, float b)
-    {
-        return a*b >= 0.0f;
-    }
-
-    public static Vector3f crossedPlane(Vector3f point1, Vector3f point2, Vector3f triVertices[])
-    {
-        Vector3f pt1 = new Vector3f(point1);
-        Vector3f pt2 = new Vector3f(point2); //Make copies
-        float vol1 = SignedVolume(pt1, triVertices[0], triVertices[1], triVertices[2]);
-        float vol2 = SignedVolume(pt2, triVertices[0], triVertices[1], triVertices[2]);
-        if (SameSign(vol1, vol2)) return null; //Stop operation if first requirement is false
-        vol1 = SignedVolume(pt1, pt2, triVertices[0], triVertices[1]);
-        vol2 = SignedVolume(pt1, pt2, triVertices[1], triVertices[2]);
-        if (!SameSign(vol1, vol2)) return null; //Stop operation if second requirement is false
-        vol1 = SignedVolume(pt1, pt2, triVertices[2], triVertices[0]);
-
-        if (SameSign(vol1, vol2)) //Third requirement is the deal breaker
-        {
-            Vector3f triVert1 = new Vector3f(triVertices[1]);
-            Vector3f triVert2 = new Vector3f(triVertices[2]);
-            Vector3f N = triVert1.sub(triVertices[0]).cross(triVert2.sub(triVertices[0])); //lol java, good luck reading this
-            float t = -1.0f*N.dot(pt1.sub(triVertices[0])) / N.dot(pt2.sub(point1)); //point1 very important, NOT pt1. JOML...
-            Vector3f dif = new Vector3f(point2);
-            dif.sub(point1);
-            dif.mul(t);
-            dif.add(point1);
-            return dif;
-        }
-        return null;
+        final float EPSILON = 0.0000001f;
+        Vector3f rayVector = new Vector3f(rayDestination).sub(rayOrigin);
+        Vector3f edge1 = new Vector3f(vertices[1]).sub(vertices[0]);
+        Vector3f edge2 = new Vector3f(vertices[2]).sub(vertices[0]);
+        Vector3f h = new Vector3f(rayVector).cross(edge2);
+        float a, f, u, v;
+        a = edge1.dot(h);
+        if (a > -EPSILON && a < EPSILON)
+            return null;    // This ray is parallel to this triangle.
+        f = 1.0f / a;
+        Vector3f s = new Vector3f(rayOrigin).sub(vertices[0]);
+        u = f * (s.dot(h));
+        if (u < 0.0 || u > 1.0)
+            return null;
+        Vector3f q = new Vector3f(s).cross(edge1);
+        v = f * rayVector.dot(q);
+        if (v < 0.0 || u + v > 1.0)
+            return null;
+        // At this stage we can compute t to find out where the intersection point is on the line.
+        float t = f * edge2.dot(q);
+        if (t < EPSILON)
+            return null; // This means that there is a line intersection but not a ray intersection.
+        Vector3f hitPoint = new Vector3f(rayOrigin).lerp(rayDestination, t);
+        float distance = new Vector3f(hitPoint).sub(rayOrigin).length();
+        if (distance > rayVector.length())
+            return null;
+        return hitPoint;
     }
 
     public static Vector3f ClosestSpherePoint(Vector3f spherePos, float sphereRad, Vector3f point)
@@ -77,51 +68,75 @@ public class Collision
         return sphereToPoint;
     }
 
-    public static Float sphereToTri(CollisionTriangle tri, Vector3f point, float radius)
-    {
-        Vector3f vertices[] = tri.getVerticesAsVectors();
-        Vector3f distance = new Vector3f(point).sub(tri.getSurfaceNormal()); //distance between pt and tri
-        float distanceToSurface = tri.getSurfaceNormal().dot(distance);
-        //distanceToSurface = distanceToSurface / tri.getSurfaceNormal().dot(tri.getSurfaceNormal());
-        boolean touching = (distanceToSurface < radius) && (distanceToSurface > 0.f);
-        if(touching) return distanceToSurface;
-        else return null;
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.N)
     public static Vector3f testTriangles(ArrayList<CollisionTriangle> triangles, Vector3f posCopy, Vector3f trajectory, float radius)
     {
-        float biggerRadius = radius*1.05f; //inflate radius slightly to pass tests
+        float biggerRadius = radius*1.01f; //inflate radius slightly to pass tests
         Vector3f newTrajectory = new Vector3f(trajectory);
         for(CollisionTriangle triangle : triangles)
         {
             //here we go..
+            Vector3f movement = new Vector3f(newTrajectory).sub(posCopy);
+            float movementLength = movement.length();
+            if(triangle.getCentroidPos().sub(posCopy).length() > movementLength+biggerRadius+triangle.getMaxRadius()) continue;
             Vector3f surfNorm = triangle.getSurfaceNormal();
             Vector3f[] vertices = triangle.getVerticesAsVectors();
             Vector3f triPt = triangle.closestPoint(newTrajectory);
-            Vector3f movement = new Vector3f(newTrajectory).sub(posCopy);
             float dotProduct = movement.dot(surfNorm);
             if(dotProduct >= 0) continue; //If intercept is coming from behind the triangle, ignore
             if(triPt != null)
             {
-                Vector3f playerToTriDistance = new Vector3f(triPt).sub(newTrajectory);
-                float distance = playerToTriDistance.length();
-                if(distance < radius)
+                Vector3f objectToTriDistance = new Vector3f(triPt).sub(newTrajectory);
+                float distance = objectToTriDistance.length();
+                if(distance <= radius)
                 {
                     newTrajectory = new Vector3f(triPt);
                     newTrajectory.add(new Vector3f(surfNorm).mul(biggerRadius));
                     return newTrajectory; //Skip the intercept check if this check passed
                 }
             }
-            Vector3f intercept = Collision.crossedPlane(posCopy, newTrajectory, vertices);
-            if(intercept != null)
-            {
-                newTrajectory = new Vector3f(intercept);
-                newTrajectory.add(new Vector3f(surfNorm).mul(biggerRadius));
-                return newTrajectory; //Skip the intercept check if this check passed
-            }
+            Vector3f intercept = rayIntersectsTriangle(posCopy, newTrajectory, vertices);
+            if(intercept == null) continue; //if no intercept, next iteration
+            newTrajectory = new Vector3f(intercept);
+            newTrajectory.add(new Vector3f(surfNorm).mul(biggerRadius));
+            return newTrajectory; //Skip the intercept check if this check passed
         }
         return null;
     }
+
+    public static void collisionCheck(Scene scene, GameObject object, Vector3f trajectory)
+    {
+        ArrayList<Integer> levelMeshIndices = scene.getLevelMeshIndices();
+        ArrayList<Mesh> levelMeshes = scene.getAllMeshes();
+        for(Integer idx : levelMeshIndices)
+        {
+            ArrayList<CollisionTriangle> triangles = levelMeshes.get(idx).colTriangles;
+            boolean hittingTris = true;
+            while(hittingTris)
+            {
+                Vector3f newTrajectory = Collision.testTriangles(triangles, object.position, trajectory, object.getInteractionRadius());
+                if(newTrajectory != null) //Func returns null pt when no triangle core.collision
+                    trajectory = newTrajectory;
+                else hittingTris = false;
+            }
+        }
+        //Vector3f direction = new Vector3f(trajectory).sub(object.position).normalize();
+        //object.setAngularVector(Utilities.vectorNormToAngularVector(direction));
+        object.setNewPosition(trajectory);
+        //TODO: Object collision
+        ArrayList<GameObject> objects = scene.getObjects();
+        /*float objectRadius = object.getInteractionRadius();
+        for(GameObject sceneObject : objects)
+        {
+            if(sceneObject.equals(object)) continue; //current object!
+            float otherRadius = object.getInteractionRadius();
+            if(Collision.spheresCollide(object.position, sceneObject.position, objectRadius, otherRadius))
+            {
+                //System.out.println("You touched the object");
+                //object.delete();
+                //maxPathSize++;
+            }
+        }*/
+    }
+
 
 }

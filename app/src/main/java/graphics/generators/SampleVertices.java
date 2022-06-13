@@ -1,4 +1,7 @@
-package graphics.meshGenerators;
+package graphics.generators;
+
+import static functions.OtherConstants.vertColorOffset;
+import static functions.OtherConstants.vertexElements;
 
 import graphics.VertexIndexBatch;
 
@@ -87,5 +90,44 @@ public class SampleVertices
     {
         return new VertexIndexBatch(triVertices, triIndices);
     }
-
+    public static VertexIndexBatch generateGridPoints(float width, float height, short partitions_x, short partitions_y, float position_y)
+    {
+        float partitionwidth = width / partitions_x;
+        float partitionheight = height / partitions_y;
+        partitions_x++; partitions_y++; //For border purposes
+        int pointcount = ((partitions_x)*2) + ((partitions_y)*2);
+        int[] indices = new int[pointcount];
+        float[] vertices = new float[pointcount*vertexElements]; //floats per vertex
+        for(int i=0; i<pointcount; i++) //Enum all indices
+        {
+            indices[i] = i;
+        }
+        for(int i=0; i<partitions_x; i++)
+        {
+            int idx = i*vertexElements*2; //floats per vertex, steps of two
+            float x = (partitionwidth * i) - (width/2);
+            vertices[idx] = x; //x
+            vertices[idx+1] = position_y; //y
+            vertices[idx+2] = height / 2; //z
+            for(int j=vertColorOffset; j<vertexElements; j++) vertices[idx+j] = 0.5f; //colour values
+            vertices[idx+vertexElements] = x; //x #2
+            vertices[idx+vertexElements+1] = position_y; //y
+            vertices[idx+vertexElements+2] = -height / 2; //z #2
+            for(int j=vertexElements+vertColorOffset; j<vertexElements*2; j++) vertices[idx+j] = 0.5f; //colour values
+        }
+        for(int i=0; i<partitions_y; i++)
+        {
+            int idx = (partitions_x*2*vertexElements) + (i*vertexElements*2); //y begins after the x vertices
+            float y = (partitionheight * i) - (height / 2);
+            vertices[idx] = width / 2; //x
+            vertices[idx+1] = position_y; //y
+            vertices[idx+2] = y; //z
+            for(int j=vertColorOffset; j<vertexElements; j++) vertices[idx+j] = 0.5f; //colour values
+            vertices[idx+vertexElements] = -width / 2; //x #2
+            vertices[idx+vertexElements+1] = position_y; //y
+            vertices[idx+vertexElements+2] = y; //z #2
+            for(int j=vertexElements+vertColorOffset; j<vertexElements*2; j++) vertices[idx+j] = 0.5f; //colour values
+        }
+        return new VertexIndexBatch(vertices, indices);
+    }
 }

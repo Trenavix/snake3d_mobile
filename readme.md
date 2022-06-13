@@ -1,5 +1,5 @@
 # snake3d_mobile
-This projrect is in an alpha stage.
+This project is in an alpha stage.
 It plans to be a full game engine running on android and a continuation of a previous project, snake3D, which was written in C++.
 The project currently features:
 * A mesh format containing vertices, indices (to triangles), materials, and submeshes

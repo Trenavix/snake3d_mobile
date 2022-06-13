@@ -11,6 +11,7 @@ public class CollisionTriangle
     private int type;
     private Vector3f centroidPos;
     private Vector3f surfaceNormal;
+    private float maxRadius;
     public CollisionTriangle(int[] vertexIndices, int type, float[] meshVertices)
     {
         if(vertexIndices.length != 3) resizeVertexArrayTo3(vertexIndices);
@@ -26,6 +27,7 @@ public class CollisionTriangle
         this.surfaceNormal = calculateNormal(vertices[0], vertices[1], vertices[2]);
         this.centroidPos = calculateCentroid(vertices);
         for(int i=0; i<3; i++) originTri[i] = new Vector3f(vertices[i]).sub(centroidPos);
+        this.maxRadius = calculateLargestRadius();
     }
     public CollisionTriangle(int idx1, int idx2, int idx3, int type, float[] meshVertices)
     {
@@ -37,6 +39,26 @@ public class CollisionTriangle
                     meshVertices[vertexIndices[i]], //x coord
                     meshVertices[vertexIndices[i]+1], //y coord
                     meshVertices[vertexIndices[i]+2]); //z coord
+    }
+    public CollisionTriangle(short type, Vector3f vertex1, Vector3f vertex2, Vector3f vertex3)
+    {
+        this.vertexIndices = null;
+        this.type = type;
+        this.vertices = new Vector3f[]{vertex1, vertex2, vertex3};
+        this.surfaceNormal = calculateNormal(vertices[0], vertices[1], vertices[2]);
+        this.centroidPos = calculateCentroid(vertices);
+        this.originTri = new Vector3f[3];
+        for(int i=0; i<3; i++) originTri[i] = new Vector3f(vertices[i]).sub(centroidPos);
+        this.maxRadius = calculateLargestRadius();
+    }
+
+    private float calculateLargestRadius()
+    {
+        float radius = 0.0f;
+        for(Vector3f vertex : originTri)
+            if(vertex.length() > radius)
+                radius = vertex.length();
+        return radius;
     }
 
     public Vector3f[] getVerticesAsVectors()
@@ -79,24 +101,7 @@ public class CollisionTriangle
         return total.div(3.0f);
     }
     Vector3f getCentroidPos(){return new Vector3f(this.centroidPos); }
-
-    /*Vector3f[] scaleTriToObjectRadius(float radius)
-    {
-        Vector3f[] originTriCopy = new Vector3f[3];
-        float radiusScale = 1.0f+radius;
-        for(int i=0; i<3; i++) originTriCopy[i] = new Vector3f(originTri[i]);
-        for(Vector3f vertex : originTriCopy)
-        {
-            vertex.mul(radiusScale); //Scale
-
-            vertex.add(new Vector3f(centroidPos).add(new Vector3f(radius))); //translate
-        }
-        return originTriCopy;
-    }*/
-    float distanceFromPoint(Vector3f point)
-    {
-        return point.dot(surfaceNormal);
-    }
+    float getMaxRadius() {return this.maxRadius; }
 
     public Vector3f closestPoint(Vector3f p)
     {

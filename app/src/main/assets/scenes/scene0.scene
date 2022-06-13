@@ -6,19 +6,24 @@
 #model_grid format: width height partitions_x partitions_y offset_y hexColour (generates GameObject)
 
 #mesh 0:
-#model_obj models/PiranhaFish/79f0_centred.obj models/PiranhaFish/79f0_centred.mtl models/PiranhaFish/ 0 1.1 0.001
-#model_obj models/Snorkel/7f78.obj models/Snorkel/7f78.mtl models/Snorkel/ 0 0.001
-model_obj models/cuccoo/cuccoo.obj models/cuccoo/cuccoo.mtl models/cuccoo/ 0 1.1 0.03
+#model_obj models/OBJ/PiranhaFish/79f0_centred.obj models/OBJ/PiranhaFish/79f0_centred.mtl models/OBJ/PiranhaFish/ 0 1.1 0.001
+#model_obj models/OBJ/Snorkel/7f78.obj models/OBJ/Snorkel/7f78.mtl models/OBJ/Snorkel/ 0 0.001
+#model_obj models/OBJ/cuccoo/cuccoo.obj models/OBJ/cuccoo/cuccoo.mtl models/OBJ/cuccoo/ 0 1.1 0.03
+#mesh32 models/cuccoo.mesh32 1.0
+mesh32 models/Coin3.mesh32 0.04
 
 #mesh 1:
-model_obj models/BG_FP/9cc8.obj models/BG_FP/9cc8.mtl models/BG_FP/ 0 1.0 0.1
-#model_obj models/SM/BG/9cb8.obj models/SM/BG/9cb8.mtl models/SM/BG/ 0 0.004
+#model_obj models/OBJ/BG_FP/9cc8.obj models/OBJ/BG_FP/9cc8.mtl models/OBJ/BG_FP/ 0 1.0 1
+#model_obj models/OBJ/SM/BG/9cb8.obj models/OBJ/SM/BG/9cb8.mtl models/OBJ/SM/BG/ 0 0.004
+#model_obj models/OBJ/SkyBoxes/Metroid/Space.obj models/OBJ/SkyBoxes/Metroid/Space2.mtl models/OBJ/SkyBoxes/Metroid/ 0 0 3
+mesh32 models/9cc8.mesh32 1.0
 
 #mesh 2:
-#model_obj models/BoxCrate/7590.obj models/BoxCrate/7590.mtl models/BoxCrate/ 1 0.01
-#model_obj models/Kokiri/KF.obj models/Kokiri/KF.mtl models/Kokiri/ 1 0 4
-model_obj models/SM/10510.obj models/SM/10510.mtl models/SM/ 1 0.0 0.004
-model_obj models/SM/B/10518.obj models/SM/B/10518.mtl models/SM/B/ 1 0.0 0.004
+#mesh32 models/box.mesh32 0.01
+#mesh32 models/KF.mesh32 4.0
+#mesh32 models/fountain.mesh32 5.0
+mesh32 models/SM_A.mesh32 0.004
+mesh32 models/SM_B2.mesh32 0.004
 
 #model_grid 10.0 10.0 25 25 0.0 FFFF00FF
 
@@ -26,8 +31,36 @@ BG_model 1
 level_model 2
 level_model 3
 
-player 0 0.0 2.0 0.0 0.0 0.0 0.0 1.000
-object 0 0.0 8.0 0.0 0.0 0.0 0.0 5 RotateY
-#object 0 0.0 4.0 1.0 0.0 0.0 0.0 0.5
-#object 0 0.0 5.0 -1.0 0.0 0.0 0.0 0.5
-#object 0 1.0 5.0 0.0 0.0 0.0 0.0 0.5
+player 0 0.0 0.0 0.0 0.0 0.0 0.0 1.000
+object 0 0.0 6.0 0.0 0.0 0.0 0.0 1 0.22 RotateY
+object 0 0.0 8.0 0.0 0.0 0.0 0.0 1 0.2 RotateY
+object 0 0.0 10.0 0.0 0.0 0.0 0.0 1 0.2 RotateY
+object 0 2.0 10.0 0.0 0.0 0.0 0.0 1 0.2 RotateY
+object 0 -2.0 10.0 0.0 0.0 0.0 0.0 1 0.2 RotateY
+object 0 0.0 10.0 2.0 0.0 0.0 0.0 1 0.2 RotateY
+object 0 0.0 10.0 -2.0 0.0 0.0 0.0 1 0.2 RotateY
+object 0 2.0 10.0 2.0 0.0 0.0 0.0 1 0.2 RotateY
+object 0 2.0 10.0 4.0 0.0 0.0 0.0 1 0.2 RotateY
+object 0 2.0 10.0 6.0 0.0 0.0 0.0 1 0.2 RotateY
+object 0 2.0 10.0 8.0 0.0 0.0 0.0 1 0.2 RotateY
+object 0 2.0 4.0 10.0 0.0 0.0 0.0 1 0.2 RotateY
+object 0 4.0 2.0 2.0 0.0 0.0 0.0 1 0.2 RotateY
+object 0 6.0 8.0 2.0 0.0 0.0 0.0 1 0.2 RotateY
+object 0 4.0 6.0 0.0 0.0 0.0 0.0 1 0.2 RotateY
+object 0 6.0 8.0 0.0 0.0 0.0 0.0 1 0.2 RotateY
+object 0 8.0 10.0 0.0 0.0 0.0 0.0 1 0.2 RotateY
+object 0 2.0 10.0 0.0 0.0 0.0 0.0 1 0.2 RotateY
+object 0 -12.0 10.0 0.0 0.0 0.0 0.0 1 0.2 RotateY
+object 0 10.0 10.0 2.0 0.0 0.0 0.0 1 0.2 RotateY
+object 0 12.0 10.0 -2.0 0.0 0.0 0.0 1 0.2 RotateY
+object 0 14.0 10.0 2.0 0.0 0.0 0.0 1 0.2 RotateY
+object 0 16.0 10.0 4.0 0.0 0.0 0.0 1 0.2 RotateY
+object 0 -4.0 10.0 6.0 0.0 0.0 0.0 1 0.2 RotateY
+object 0 -6.0 10.0 8.0 0.0 0.0 0.0 1 0.2 RotateY
+object 0 -8.0 4.0 10.0 0.0 0.0 0.0 1 0.2 RotateY
+object 0 -10.0 2.0 2.0 0.0 0.0 0.0 1 0.2 RotateY
+object 0 14.0 8.0 1.0 0.0 0.0 0.0 1 0.2 RotateY
+object 0 0.0 6.0 1.0 0.0 0.0 0.0 1 0.2 RotateY
+object 0 0.0 8.0 1.0 0.0 0.0 0.0 1 0.2 RotateY
+object 0 0.0 10.0 1.0 0.0 0.0 0.0 1 0.2 RotateY
+object 0 2.0 10.0 1.0 0.0 0.0 0.0 1 0.2 RotateY

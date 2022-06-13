@@ -21,7 +21,8 @@ public class Mesh
     private final int[][] splitIndices; //2D array; Column: texture, Row: Indices
     private final int[] masterIndices;
     private final int[] masterIndexOffsets;
-    private final Material[] materials;
+    private final int[] indicesPerMaterial;
+    private  Material[] materials;
     private final int[] textureIDs;
     public ArrayList<CollisionTriangle> colTriangles = new ArrayList<CollisionTriangle>();
     private Vector3f translation = new Vector3f(0.f, 0.f, 0.f);
@@ -47,6 +48,13 @@ public class Mesh
             buf +=  subLength;//get entire length
         }
         masterIndices = new int[buf];
+        this.indicesPerMaterial = new int[masterIndexOffsets.length];
+        for(int i=0; i<indicesPerMaterial.length; i++)
+        {
+            if(i+1 >= indicesPerMaterial.length)
+                indicesPerMaterial[i] = (getMasterIndices().length - masterIndexOffsets[i]);
+            else indicesPerMaterial[i] = (masterIndexOffsets[i+1] - masterIndexOffsets[i]);
+        }
         buf = 0;
         for(int i=0; i<splitIndices.length; i++) //combine 2d array axes into one
         {
@@ -74,6 +82,30 @@ public class Mesh
                             i, vertices));
     }
 
+    public Mesh(float[] vertices, int[] indices, Material[] materials, int[] materialIndexOffsets, int polygonType)
+    {
+        this.vertices = vertices;
+        this.masterIndices = indices;
+        this.materials = materials;
+        this.polygonType = polygonType;
+        this.masterIndexOffsets = materialIndexOffsets;
+        this.interactionRadius = 0.0f;
+        this.textureIDs = new int[materials.length];
+        this.splitIndices = null; //die
+        this.indicesPerMaterial = new int[masterIndexOffsets.length];
+        for(int i=0; i<indicesPerMaterial.length; i++)
+        {
+            if(i+1 >= indicesPerMaterial.length)
+                indicesPerMaterial[i] = (getMasterIndices().length - masterIndexOffsets[i]);
+            else indicesPerMaterial[i] = (masterIndexOffsets[i+1] - masterIndexOffsets[i]);
+        }
+    }
+
+    private void splitToMasterIndices()
+    {
+
+    }
+
     public void translate(Vector3f translateVector)
     {
         translation = translation.add(translateVector);
@@ -81,7 +113,7 @@ public class Mesh
     public void loadTexturesIntoGL()
     {
         for(int i=0; i<textureIDs.length; i++)
-            textureIDs[i] = Texture.loadTextureIntoGL(materials[i], textureIDs, i);
+            textureIDs[i] = materials[i].getTextures().get(0).loadMaterialIntoGL(textureIDs, i);
     }
     public void addSubMesh(Mesh subMesh)
     {
@@ -138,13 +170,14 @@ public class Mesh
     public void drawMesh(float[] worldMatrix, int GL_worldMatrixLocation)
     {
         setMeshMatrix(worldMatrix, GL_worldMatrixLocation);
-        for(int i = 0; i<getSplitIndices().length; i++)
+        for(int i = 0; i<materials.length; i++)
         {
             GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, getTextureID(i));
+            materials[i].setMaterialPropertiesInGL();
             if(polygonType == OtherConstants.polygonType_TRIANGLE)
-                GLES30.glDrawElements(GLES30.GL_TRIANGLES, getSplitIndices()[i].length, GLES30.GL_UNSIGNED_INT, getMasterIndexOffset(i)* bytesInFloat);
+                GLES30.glDrawElements(GLES30.GL_TRIANGLES, indicesPerMaterial[i], GLES30.GL_UNSIGNED_INT, getMasterIndexOffset(i)* bytesInFloat);
             else if(polygonType == OtherConstants.polygonType_LINE)
-                GLES30.glDrawElements(GLES30.GL_LINES, getSplitIndices()[i].length, GLES30.GL_UNSIGNED_INT, getMasterIndexOffset(i)* bytesInFloat);
+                GLES30.glDrawElements(GLES30.GL_LINES, indicesPerMaterial[i], GLES30.GL_UNSIGNED_INT, getMasterIndexOffset(i)* bytesInFloat);
         }
         if(subMeshes.size() > 0) //draw all subMeshes
             for(Mesh sub : subMeshes)

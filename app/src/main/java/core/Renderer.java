@@ -1,4 +1,4 @@
-package com.example.Snake3D;
+package core;
 import android.opengl.GLES30;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
@@ -12,9 +12,7 @@ import java.nio.IntBuffer;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
-import core.AssetLoader;
 import core.objects.PlayerObject;
-import core.Scene;
 import graphics.Camera;
 import graphics.Shader;
 import graphics.Utilities;
@@ -35,33 +33,18 @@ public class Renderer implements GLSurfaceView.Renderer
     float[] worldMatrix = new float[16];
     float[] viewMatrix = new float[16];
     float[] projMatrix = new float[16];
-    int GL_worldMatrixLocation; //GL Matrix locations
-    int GL_viewMatrixLocation;
-    int GL_projMatrixLocation;
-    static int GL_texUniLocation;
-    static int GL_alphaTestUniLocation;
     public static Camera cam = new Camera(new Vector3f(0,0,0), new Vector2f(4.725f, 0), 0.005f, 3.f);//start looking backward (-1.5*pi)
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     public void onSurfaceCreated(GL10 gl, EGLConfig config)
     {
-        Shader.makeprogram();
-        GLES30.glEnableVertexAttribArray(Shader.positionhandle);
-        GLES30.glEnableVertexAttribArray(Shader.vertUVhandle);
-        GLES30.glEnableVertexAttribArray(Shader.vertcolorhandle);
-        int program = Shader.program;
-        GL_worldMatrixLocation = GLES30.glGetUniformLocation(program, "mWorld");
-        GL_viewMatrixLocation = GLES30.glGetUniformLocation(program, "mView");
-        GL_projMatrixLocation = GLES30.glGetUniformLocation(program, "mProj");
-        GL_texUniLocation = GLES30.glGetUniformLocation(program, "u_Texture");
-        GL_alphaTestUniLocation = GLES30.glGetUniformLocation(program, "alpha_Threshold");
+        Shader.makeShaderProgram();
         GLES30.glEnable(GLES30.GL_CULL_FACE);
         genBuffers();
-        try {
-            prepareScene();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
+        try
+        { prepareScene();}
+        catch (ClassNotFoundException e)
+        { e.printStackTrace(); }
     }
     public void genBuffers()
     {
@@ -94,9 +77,9 @@ public class Renderer implements GLSurfaceView.Renderer
         GLES30.glViewport(0,0,width,height);
         Matrix.setIdentityM(worldMatrix, 0);
         float aspectRatio = (float) width / height;
-        Utilities.perspectiveFrustrum(projMatrix, 45, aspectRatio, 0.1f, 1000.0f);
-        GLES30.glUniformMatrix4fv(GL_worldMatrixLocation, 1, false, floatArrayToBuffer(worldMatrix, true));
-        GLES30.glUniformMatrix4fv(GL_projMatrixLocation, 1, false, floatArrayToBuffer(projMatrix, true));
+        Utilities.perspectiveFrustrum(projMatrix, 45, aspectRatio, 0.3f, 200.0f);
+        GLES30.glUniformMatrix4fv(Shader.GL_worldMatrixLocation, 1, false, floatArrayToBuffer(worldMatrix, true));
+        GLES30.glUniformMatrix4fv(Shader.GL_projMatrixLocation, 1, false, floatArrayToBuffer(projMatrix, true));
     }
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
@@ -105,6 +88,8 @@ public class Renderer implements GLSurfaceView.Renderer
         long newTime = System.nanoTime();
         long deltaTime = newTime - frameTime;
         frameTimeRatio = deltaTime/ nanoSecondsIn60FPS;
+        Shader.time += frameTimeRatio;
+        //if(Shader.time > 100.0f) Shader.time /= 100.0f;
         frameTime = newTime;
         GLES30.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT | GLES30.GL_DEPTH_BUFFER_BIT);
@@ -118,19 +103,30 @@ public class Renderer implements GLSurfaceView.Renderer
                     cam.lookAt.x, cam.lookAt.y, cam.lookAt.z,
                     0.0f, 1.0f, 0.0f);
         }
-        GLES30.glUniformMatrix4fv(GL_viewMatrixLocation, 1, false, floatArrayToBuffer(viewMatrix, true));
+        GLES30.glUniformMatrix4fv(Shader.GL_viewMatrixLocation, 1, false, floatArrayToBuffer(viewMatrix, true));
         Matrix.setIdentityM(worldMatrix, 0);
-        GLES30.glUniformMatrix4fv(GL_worldMatrixLocation, 1, false, floatArrayToBuffer(worldMatrix, true));
-        GLES30.glUniform1i(GL_texUniLocation, 0);
-        try {
-            currentScene.drawScene(worldMatrix, GL_worldMatrixLocation, GL_alphaTestUniLocation, cam.position);
-        } catch (NoSuchMethodException e) {
-            e.printStackTrace();
-        } catch (InvocationTargetException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
+        GLES30.glUniformMatrix4fv(Shader.GL_worldMatrixLocation, 1, false, floatArrayToBuffer(worldMatrix, true));
+        GLES30.glUniform1i(Shader.GL_texUniLocation, 0);
+        GLES30.glUniform3f(Shader.GL_ambientColorUniLocation, 1.0f, 1.0f, 1.0f);
+        Shader.lightDirection.normalize();
+        GLES30.glUniform3f(Shader.GL_lightDirUniLocation,
+                Shader.lightDirection.x,
+                Shader.lightDirection.y,
+                Shader.lightDirection.z); //light pointing down
+        GLES30.glUniform3f(Shader.GL_ambientColorUniLocation,
+                Shader.ambientColor.x, Shader.ambientColor.y, Shader.ambientColor.z);
+        GLES30.glUniform3f(Shader.GL_diffuseColorUniLocation,
+                Shader.diffuseColor.x, Shader.diffuseColor.y, Shader.diffuseColor.z);
+        GLES30.glUniform1f(Shader.GL_specularIntensityUniLocation, Shader.specularIntensity);
+        GLES30.glUniform1f(Shader.GL_shininessUniLocation, Shader.materialShininess);
+        GLES30.glUniform1f(Shader.GL_timeLocation, (float)Shader.time);
+        try
+        {
+            currentScene.drawScene(worldMatrix, Shader.GL_worldMatrixLocation, Shader.GL_alphaTestUniLocation, cam.position);
         }
+        catch(NoSuchMethodException e) {e.printStackTrace(); }
+        catch (InvocationTargetException e) { e.printStackTrace(); }
+        catch (IllegalAccessException e) { e.printStackTrace(); }
         move();
     }
 
@@ -141,6 +137,7 @@ public class Renderer implements GLSurfaceView.Renderer
         if(currentPlayer != null)
         {
             currentPlayer.moveForward(joyStickAngle, joyStickMag*(float)frameTimeRatio, cam.position, currentScene);
+            //Outdated for free movement (not-automatic forward x/y movement):
             //currentPlayer.moveForward(90.f, currentPlayer.getSpeed(), cam.position, cam.rotation, currentScene);
             return;
         }

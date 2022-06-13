@@ -1,4 +1,4 @@
-package com.example.Snake3D;
+package core;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -8,7 +8,8 @@ import android.os.Bundle;
 import android.view.MotionEvent;
 import android.view.View;
 
-import core.AssetLoader;
+import com.example.Snake3D.R;
+
 import io.github.controlwear.virtual.joystick.android.JoystickView;
 
 public class MainActivity extends AppCompatActivity

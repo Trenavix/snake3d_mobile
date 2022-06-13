@@ -2,6 +2,7 @@ package core.objects;
 
 import android.opengl.GLES30;
 import android.opengl.Matrix;
+import android.os.Build;
 
 import org.joml.Vector3f;
 import org.joml.Vector4f;
@@ -14,22 +15,23 @@ import core.collision.CollisionTriangle;
 import functions.OtherConstants;
 import graphics.Mesh;
 import graphics.Utilities;
-import com.example.Snake3D.Renderer;
+import core.Renderer;
 
 import static functions.Buffers.floatArrayToBuffer;
+
+import androidx.annotation.RequiresApi;
 
 public class PlayerObject extends GameObject
 {
     float fixedSpeed;
-    Mesh playerMesh;
-    int maxPathSize = 4;
-    public PlayerObject(int modelIdx, Mesh mesh, Vector3f position, Vector3f rotation, float scale, float speed, float radius)
+    int maxPathSize = 1;
+    public PlayerObject(Mesh mesh, Vector3f position, Vector3f rotation, float scale, float speed, float radius)
     {
-        super(modelIdx, position, rotation, scale, radius);
+        super(mesh, position, rotation, scale, radius);
         this.fixedSpeed = speed;
-        this.playerMesh = mesh;
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.N)
     public void moveForward(float angle, float magnitude, Vector3f cameraPosition, Scene currentScene)
     {
         //Do not ask how this works because I cannot answer
@@ -52,10 +54,10 @@ public class PlayerObject extends GameObject
         collisionCheck(currentScene, trajectory);
     }
 
-    private void collisionCheck(Scene level, Vector3f trajectory)
+    private void collisionCheck(Scene scene, Vector3f trajectory)
     {
-        ArrayList<Integer> levelMeshIndices = level.getLevelMeshIndices();
-        ArrayList<Mesh> levelMeshes = level.getAllMeshes();
+        ArrayList<Integer> levelMeshIndices = scene.getLevelMeshIndices();
+        ArrayList<Mesh> levelMeshes = scene.getAllMeshes();
 
         for(Integer idx : levelMeshIndices)
         {
@@ -72,10 +74,23 @@ public class PlayerObject extends GameObject
         Vector3f direction = new Vector3f(trajectory).sub(position).normalize();
         angularVector = Utilities.vectorNormToAngularVector(direction);
         setNewPosition(trajectory);
-        //TODO: Object core.collision
+        //TODO: Object collision
+        ArrayList<GameObject> objects = scene.getObjects();
+        float playerRadius = getInteractionRadius();
+        for(GameObject object : objects)
+        {
+            if(object.equals(this)) continue; //player object!
+            float objectRadius = object.getInteractionRadius();
+            if(Collision.spheresCollide(position, object.position, playerRadius, objectRadius))
+            {
+                System.out.println("You touched the object");
+                object.delete();
+                maxPathSize++;
+            }
+        }
     }
 
-    private void setNewPosition(Vector3f trajectory)
+    public void setNewPosition(Vector3f trajectory)
     {
         Vector3f offset; int currentPathSize = subObjects.size();
         float radius = getInteractionRadius();
@@ -98,7 +113,7 @@ public class PlayerObject extends GameObject
     private void addToPath(Vector3f pos)
     {
         if(subObjects.size() > maxPathSize) subObjects.removeFirst();
-        subObjects.add(new GameObject(getModelIdx(), pos, rotation, scale, getInteractionRadius()));
+        subObjects.add(new PlayerObject(getMeshReference(), pos, rotation, scale, fixedSpeed, getInteractionRadius()));
         subObjects.getLast().setAngularVector(angularVector);
     }
 
