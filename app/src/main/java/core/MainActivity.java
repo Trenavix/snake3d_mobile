@@ -40,7 +40,7 @@ public class MainActivity extends AppCompatActivity
                     case MotionEvent.ACTION_MOVE:
                         float dx = x - previousX;
                         float dy = y - previousY;
-                        Renderer.cam.updateOrientation(dx, dy);
+                        Renderer.currentScene.getCamera().updateOrientation(dx, dy);
                 }
                 previousX = x;
                 previousY = y;

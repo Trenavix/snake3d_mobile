@@ -20,9 +20,9 @@ public class Mesh32Commands
     public static final byte CMD_Material = 6; //Create new Material with String Name
     public static final byte CMD_Texture = 7; //Prepare new Texture with grid size to add to last material. Must follow with data
     //Set up texture clamping/mirroring in one byte
-    //1st bit: S clamp, 2nd bit: T clamp
-    //3rd bit: S Mirror, 4th bit: T Mirror
-    public static final byte CMD_TextureClampMirror = 8;
+    //1st bit: S clamp, 2nd bit: T clamp, 3rd bit: R clamp
+    //4th bit: S mirror, 5th bit: T mirror, 6th bit: R mirror
+    public static final byte CMD_TextureWrap = 8;
     public static final byte CMD_Mat_AmbientColor = 9;
     public static final byte CMD_Mat_DiffuseColor = 0x0A;
     public static final byte CMD_Mat_SpecularColor = 0x0B;

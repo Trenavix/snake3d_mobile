@@ -4,6 +4,7 @@ import android.opengl.GLES30;
 
 import org.joml.Vector2f;
 import org.joml.Vector3f;
+import org.joml.Vector4f;
 
 import java.util.ArrayList;
 
@@ -30,19 +31,21 @@ public class Material
     public void setMaterialPropertiesInGL()
     {
         Texture mainTexture = textures.get(0);
-        Shader.ambientColor = this.ambientColor;
-        Shader.diffuseColor = this.diffuseColor;
         Shader.specularIntensity = this.specularIntensity;
         Shader.materialShininess = this.shininess;
         if(sphereMap) mainTexture.setSphereMapping();
         else mainTexture.setStandardMapping();
         GLES30.glUniform1f(Shader.GL_texScrollSLocation, mainTexture.scrollFactors.x);
         GLES30.glUniform1f(Shader.GL_texScrollTLocation, mainTexture.scrollFactors.y);
+        GLES30.glUniform3f(Shader.GL_ambientColorUniLocation,
+                this.ambientColor.x, this.ambientColor.y, this.ambientColor.z);
+        GLES30.glUniform3f(Shader.GL_diffuseColorUniLocation,
+                this.diffuseColor.x, this.diffuseColor.y, this.diffuseColor.z);
     }
-    public void setAmbientColor(Vector3f newColor) { ambientColor = newColor; }
-    public void setDiffuseColor(Vector3f newColor) { diffuseColor = newColor; }
-    public void setSpecularIntensity(float newIntensity) {specularIntensity = newIntensity; }
-    public void setShininess(float newShine) {shininess = newShine; }
+    public void setAmbientColor(Vector3f newColor) { this.ambientColor = newColor; }
+    public void setDiffuseColor(Vector3f newColor) { this.diffuseColor = newColor; }
+    public void setSpecularIntensity(float newIntensity) {this.specularIntensity = newIntensity; }
+    public void setShininess(float newShine) {this.shininess = newShine; }
     public void setTextureScroll(Vector2f scrollFactors) {this.scrollFactors = scrollFactors;}
 
     public ArrayList<Texture> getTextures() { return textures; }

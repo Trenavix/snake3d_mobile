@@ -7,6 +7,7 @@ import androidx.annotation.RequiresApi;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 
 import core.Scene;
 import core.objects.GameObject;
@@ -123,7 +124,7 @@ public class Collision
         //object.setAngularVector(Utilities.vectorNormToAngularVector(direction));
         object.setNewPosition(trajectory);
         //TODO: Object collision
-        ArrayList<GameObject> objects = scene.getObjects();
+        LinkedList<GameObject> objects = scene.getObjects();
         /*float objectRadius = object.getInteractionRadius();
         for(GameObject sceneObject : objects)
         {

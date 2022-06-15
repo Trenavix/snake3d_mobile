@@ -113,6 +113,18 @@ public class Mesh32ToMesh
                     materials.get(materials.size()-1).getLastTexture().scrollFactors.y =
                             readFloatFromBytes(mesh32, i);
                     break;
+                case Mesh32Commands.CMD_Mat_AmbientColor:
+                    float R = (mesh32[i] & 0xFF) / 255.0f;
+                    float G = (mesh32[i+1] & 0xFF) / 255.0f;
+                    float B = (mesh32[i+2] & 0xFF) / 255.0f;
+                    materials.get(materials.size()-1).setAmbientColor(new Vector3f(R, G, B));
+                    break;
+                case Mesh32Commands.CMD_Mat_DiffuseColor:
+                    float R_d = (mesh32[i] & 0xFF) / 255.0f;
+                    float G_d = (mesh32[i+1] & 0xFF) / 255.0f;
+                    float B_d = (mesh32[i+2] & 0xFF) / 255.0f;
+                    materials.get(materials.size()-1).setDiffuseColor(new Vector3f(R_d, G_d, B_d));
+                    break;
                 case Mesh32Commands.CMD_CollisionVertices:
                     for(int j=i; j<i+step; j+=(3*4)) //for every vertex offset
                     {
@@ -142,6 +154,9 @@ public class Mesh32ToMesh
                                 collisionVerts.get(colIndices[2])
                                 ));
                     }
+                    break;
+                case Mesh32Commands.CMD_TextureWrap:
+                    materials.get(materials.size()-1).getLastTexture().setWrappingValue(mesh32[i]);
                     break;
                 case Mesh32Commands.CMD_END: //END Conversion
                     float[] vertArray =

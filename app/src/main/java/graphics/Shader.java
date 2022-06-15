@@ -35,6 +35,11 @@ public class Shader
     public static int GL_timeLocation;
     public static int GL_alphaTestUniLocation;
     public static int GL_sphereMappingUniLocation;
+    public static int GL_envColorUniLocation;
+    public static int GL_billboardUniLocation;
+    public static int GL_billboardPosUniLocation;
+    public static int GL_billboardScaleUniLocation;
+    public static int GL_billboardRotationUniLocation;
     public static Vector3f lightDirection = new Vector3f(-0.0f, -1.0f, -0.0f);
     public static Vector3f ambientColor = new Vector3f(0.5f, 0.5f, 0.5f);
     public static Vector3f diffuseColor = new Vector3f(1.0f, 1.0f, 1.0f);
@@ -82,6 +87,11 @@ public class Shader
         GL_timeLocation = GLES30.glGetUniformLocation(program, "u_Time");
         GL_alphaTestUniLocation = GLES30.glGetUniformLocation(program, "alpha_Threshold");
         GL_sphereMappingUniLocation = GLES30.glGetUniformLocation(program, "sphereMapping");
+        GL_envColorUniLocation = GLES30.glGetUniformLocation(program, "u_EnvColor");
+        GL_billboardUniLocation = GLES30.glGetUniformLocation(program, "u_Billboard");
+        GL_billboardPosUniLocation = GLES30.glGetUniformLocation(program, "u_Billboard_Position");
+        GL_billboardScaleUniLocation = GLES30.glGetUniformLocation(program, "u_Billboard_Scale");
+        GL_billboardRotationUniLocation = GLES30.glGetUniformLocation(program, "u_Billboard_Rotation");
     }
 
     private static int loadShader(int type, String shaderText)

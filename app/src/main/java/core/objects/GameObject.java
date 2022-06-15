@@ -3,7 +3,10 @@ package core.objects;
 import android.opengl.GLES30;
 import android.opengl.Matrix;
 
+import core.Renderer;
+import core.Scene;
 import graphics.Mesh;
+import graphics.Shader;
 import graphics.Utilities;
 
 import org.joml.Vector3f;
@@ -12,6 +15,7 @@ import org.joml.Vector4f;
 import static functions.Buffers.floatArrayToBuffer;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.Arrays;
 import java.util.LinkedList;
 
 public class GameObject extends Entity
@@ -23,8 +27,9 @@ public class GameObject extends Entity
     private float radius; //interaction radius i.e. core.collision
     LinkedList<GameObject> subObjects;
     boolean deleteFromScene = false;
+    public int meshSceneIndex;
 
-    public GameObject(Mesh mesh, Vector3f position, Vector3f rotation, float scale, float radius)
+    public GameObject(Mesh mesh, Vector3f position, Vector3f rotation, float scale, float radius, int sceneIndex)
     {
         super(position);
         this.mesh = mesh;
@@ -33,23 +38,54 @@ public class GameObject extends Entity
         this.scale = scale;
         this.radius = radius;
         this.subObjects = new LinkedList<GameObject>();
+        this.meshSceneIndex = sceneIndex;
     }
-    public void placeObjectInWorld(float[] worldMatrix, int GL_worldMatrixLocation) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        Matrix.setIdentityM(worldMatrix, 0);
+    private void setMeshIndex(Scene scene, int idx) { this.meshSceneIndex = idx; }
+    public void placeObjectInWorld()
+    {
         float objectScale = scale;
-        Matrix.translateM(worldMatrix, 0, position.x, position.y, position.z);
-        Matrix.scaleM(worldMatrix, 0, objectScale, objectScale, objectScale);
-        Utilities.rotateMatrix3Axes(worldMatrix, rotation);
-        GLES30.glUniformMatrix4fv(GL_worldMatrixLocation, 1, false, floatArrayToBuffer(worldMatrix, true));
+        if(this.mesh.billboard)
+        {
+            GLES30.glUniform3f(Shader.GL_billboardPosUniLocation, this.position.x, this.position.y, this.position.z);
+        }
+        Matrix.translateM(Renderer.worldMatrix, 0, position.x, position.y, position.z);
+        Matrix.scaleM(Renderer.worldMatrix, 0, objectScale, objectScale, objectScale);
+        Utilities.rotateMatrix3Axes(Renderer.worldMatrix, this.rotation);
+        GLES30.glUniformMatrix4fv(
+                Shader.GL_worldMatrixLocation,
+                1,
+                false,
+                floatArrayToBuffer(Renderer.worldMatrix, true)
+        );
     }
 
-    public void drawObject(float[] worldMatrix, int GL_worldMatrixLocation) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException
+    public void drawObject()
     {
-        placeObjectInWorld(worldMatrix, GL_worldMatrixLocation);
-        mesh.drawMesh(worldMatrix, GL_worldMatrixLocation);
-        for(GameObject subObject : getSubObjects())
-            subObject.drawObject(worldMatrix, GL_worldMatrixLocation);
+        float[] storeMatrix = Arrays.copyOf(Renderer.worldMatrix, Renderer.worldMatrix.length); //store copy
+        drawObjectMesh();
+        for(GameObject subObject : getSubObjects()) //draw all subObjects
+            subObject.drawObject();
+        Renderer.worldMatrix = storeMatrix; //restore
     }
+
+    public void drawObjectMesh()
+    {
+        placeObjectInWorld();
+        //if(mesh.billboard) mesh.rotation = this.rotation;
+        mesh.drawMesh();
+    }
+
+    public void collectibleCollected(Scene currentScene) throws ClassNotFoundException
+    {
+        swapObject(new BehavObject(currentScene.getMesh(4), new Vector3f(this.position), new Vector3f(), 0.5f, 0.0f,4,  "Sparkles"), currentScene);
+    }
+
+    public void swapObject(GameObject newObject, Scene scene)
+    {
+        scene.addObject(newObject);
+        this.delete();
+    }
+
     public float getInteractionRadius()
     {
         return radius*scale;
@@ -60,4 +96,9 @@ public class GameObject extends Entity
     public void delete(){ this.deleteFromScene = true; }
     public boolean isReadyForDeletion() { return deleteFromScene; }
     public void setNewPosition(Vector3f newPos) {position = newPos;}
+    public void setMeshFromScene(int index, Scene scene)
+    {
+        this.mesh = scene.getMesh(index);
+        this.meshSceneIndex = index;
+    }
 }

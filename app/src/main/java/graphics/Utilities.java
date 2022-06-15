@@ -26,11 +26,11 @@ public class Utilities
         Matrix.frustumM(matrix, 0, -fW, fW, -fH, fH, zNear, zFar);
     }
 
-    public static void rotateMatrix3Axes(float[] worldMatrix, Vector3f rotations)
+    public static void rotateMatrix3Axes(float[] matrix, Vector3f rotations)
     {
-        Matrix.rotateM(worldMatrix, 0, rotations.x, 1.f, 0.f, 0.f);
-        Matrix.rotateM(worldMatrix, 0, rotations.y, 0.f, 1.f, 0.f);
-        Matrix.rotateM(worldMatrix, 0, rotations.z, 0.f, 0.f, 1.f);
+        Matrix.rotateM(matrix, 0, rotations.x, 1.f, 0.f, 0.f);
+        Matrix.rotateM(matrix, 0, rotations.y, 0.f, 1.f, 0.f);
+        Matrix.rotateM(matrix, 0, rotations.z, 0.f, 0.f, 1.f);
     }
     public static Vector3f orientationToDirectionVector(Vector2f rotations)
     {
@@ -41,11 +41,11 @@ public class Utilities
         );
     }
 
-    public static Vector4f vectorNormToAngularVector(Vector3f norm)
+    public static Vector4f vectorNormToAngularVector(Vector3f norm, Vector3f up)
     {
-        Vector3f crossVec = new Vector3f(0.f,1.f,0.f); //unitY
+        Vector3f crossVec = new Vector3f(up); //unitY
         crossVec.cross(norm);
-        float theta = (float)Math.acos(norm.dot(0.f,1.f,0.f));
+        float theta = (float)Math.acos(norm.dot(up));
         return new Vector4f(crossVec, theta*RAD2DEG);
     }
 
@@ -62,7 +62,7 @@ public class Utilities
 
     public static Vector3f vectorNormTo3AxisRotation(Vector3f vecnorm)
     {
-        Vector4f angularvec = vectorNormToAngularVector(vecnorm);
+        Vector4f angularvec = vectorNormToAngularVector(vecnorm, new Vector3f(0,1.0f,0));
         return angularVectorTo3AxisRotation(angularvec);
     }
     public int[] twoDimensionArrayToSingle(int[][] array)

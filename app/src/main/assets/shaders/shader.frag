@@ -4,6 +4,7 @@ uniform sampler2D u_Texture;
 varying vec2 vN;
 uniform highp float u_MatSpecularIntensity;
 uniform highp float u_Shininess;
+uniform lowp vec4 u_EnvColor;
 varying lowp vec4 fragColor;
 varying lowp vec2 fragUV;
 varying lowp vec3 fragNormal;
@@ -26,8 +27,9 @@ void main()
     lowp float specularFactor = pow(max(0.0, -dot(reflection, eye)), u_Shininess);
     highp vec3 specularColor = u_Light.diffuseColor * u_MatSpecularIntensity * specularFactor;
     gl_FragColor =
-        fragColor * texture2D(u_Texture, fragUV)
-        * vec4(u_Light.ambientColor + diffuseColor + specularColor, 1.0);
+        fragColor * texture2D(u_Texture, fragUV) *
+        vec4(u_Light.ambientColor + diffuseColor + specularColor, 1.0) *
+        u_EnvColor;
     if(gl_FragColor.a <= alpha_Threshold)
         discard; /*AlphaTest*/
 }

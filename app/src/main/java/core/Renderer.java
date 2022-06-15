@@ -1,4 +1,5 @@
 package core;
+import android.annotation.SuppressLint;
 import android.opengl.GLES30;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
@@ -30,10 +31,9 @@ public class Renderer implements GLSurfaceView.Renderer
     public static double frameTimeRatio;
     static Scene currentScene;
     //set up global matrices
-    float[] worldMatrix = new float[16];
-    float[] viewMatrix = new float[16];
-    float[] projMatrix = new float[16];
-    public static Camera cam = new Camera(new Vector3f(0,0,0), new Vector2f(4.725f, 0), 0.005f, 3.f);//start looking backward (-1.5*pi)
+    public static float[] worldMatrix = new float[16];
+    public static float[] viewMatrix = new float[16];
+    public static float[] projMatrix = new float[16];
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     public void onSurfaceCreated(GL10 gl, EGLConfig config)
@@ -82,6 +82,7 @@ public class Renderer implements GLSurfaceView.Renderer
         GLES30.glUniformMatrix4fv(Shader.GL_projMatrixLocation, 1, false, floatArrayToBuffer(projMatrix, true));
     }
 
+    @SuppressLint("NewApi")
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     public void onDrawFrame(GL10 gl)
     {
@@ -93,6 +94,7 @@ public class Renderer implements GLSurfaceView.Renderer
         frameTime = newTime;
         GLES30.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT | GLES30.GL_DEPTH_BUFFER_BIT);
+        Camera cam = currentScene.getCamera();
         if(currentScene.getPlayer() != null) cam.followPos(currentScene.getPlayer().position, viewMatrix); //If player exists, 3rd person cam
         else //otherwise 1st person
         {
@@ -113,10 +115,6 @@ public class Renderer implements GLSurfaceView.Renderer
                 Shader.lightDirection.x,
                 Shader.lightDirection.y,
                 Shader.lightDirection.z); //light pointing down
-        GLES30.glUniform3f(Shader.GL_ambientColorUniLocation,
-                Shader.ambientColor.x, Shader.ambientColor.y, Shader.ambientColor.z);
-        GLES30.glUniform3f(Shader.GL_diffuseColorUniLocation,
-                Shader.diffuseColor.x, Shader.diffuseColor.y, Shader.diffuseColor.z);
         GLES30.glUniform1f(Shader.GL_specularIntensityUniLocation, Shader.specularIntensity);
         GLES30.glUniform1f(Shader.GL_shininessUniLocation, Shader.materialShininess);
         GLES30.glUniform1f(Shader.GL_timeLocation, (float)Shader.time);
@@ -127,16 +125,20 @@ public class Renderer implements GLSurfaceView.Renderer
         catch(NoSuchMethodException e) {e.printStackTrace(); }
         catch (InvocationTargetException e) { e.printStackTrace(); }
         catch (IllegalAccessException e) { e.printStackTrace(); }
-        move();
+        try {
+            move();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
     }
 
-    private static void move()
-    {
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    private static void move() throws ClassNotFoundException {
         PlayerObject currentPlayer = null;
         if(currentScene != null) currentPlayer = currentScene.getPlayer();
         if(currentPlayer != null)
         {
-            currentPlayer.moveForward(joyStickAngle, joyStickMag*(float)frameTimeRatio, cam.position, currentScene);
+            currentPlayer.moveForward(joyStickAngle, joyStickMag*(float)frameTimeRatio, currentScene.getCamera().position, currentScene);
             //Outdated for free movement (not-automatic forward x/y movement):
             //currentPlayer.moveForward(90.f, currentPlayer.getSpeed(), cam.position, cam.rotation, currentScene);
             return;

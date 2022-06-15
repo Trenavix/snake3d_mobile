@@ -10,7 +10,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import org.joml.Vector3f;
+import org.joml.Vector4f;
 
+import core.Renderer;
 import core.collision.CollisionTriangle;
 import functions.OtherConstants;
 
@@ -27,9 +29,12 @@ public class Mesh
     public ArrayList<CollisionTriangle> colTriangles = new ArrayList<CollisionTriangle>();
     private Vector3f translation = new Vector3f(0.f, 0.f, 0.f);
     private Vector3f scale = new Vector3f(1.f, 1.f, 1.f);
-    private Vector3f rotation = new Vector3f(0.f, 0.f, 0.f);
+    public Vector3f rotation = new Vector3f(0.f, 0.f, 0.f);
     private ArrayList<Mesh> subMeshes = new ArrayList<Mesh>();
     private final float interactionRadius; //For future use in bones (i.e. hit-boxes)
+    public Vector4f envColor = new Vector4f(1.0f, 1.0f, 1.0f, 1.0f);//General purpose color
+    public boolean billboard = false;
+    public boolean depthBufferWritingEnabled = true;
 
     public Mesh(float[] vertices, int[][] indices, Material[] materials, int polygonType, int[][] collisionIndices, float interactionRadius)
     {
@@ -101,6 +106,19 @@ public class Mesh
         }
     }
 
+    private Mesh(float[] vertices, int[] indices, Material[] materials, int[] materialIndexOffsets, int polygonType, int[] textureIDs, int[] indicesPerMaterial)
+    {
+        this.vertices = vertices;
+        this.masterIndices = indices;
+        this.materials = materials;
+        this.polygonType = polygonType;
+        this.masterIndexOffsets = materialIndexOffsets;
+        this.interactionRadius = 0.0f;
+        this.textureIDs = textureIDs;
+        this.splitIndices = null; //die
+        this.indicesPerMaterial = indicesPerMaterial;
+    }
+
     private void splitToMasterIndices()
     {
 
@@ -109,6 +127,10 @@ public class Mesh
     public void translate(Vector3f translateVector)
     {
         translation = translation.add(translateVector);
+    }
+    public void setTranslation(Vector3f newTranslation)
+    {
+        translation = newTranslation;
     }
     public void loadTexturesIntoGL()
     {
@@ -119,11 +141,7 @@ public class Mesh
     {
         subMeshes.add(subMesh);
     }
-    public void rotate(Vector3f rotateVector)
-    {
-        rotation = rotation.add(rotateVector);
-    }
-    public void scale(Vector3f scaleVector) { scale = scale.add(scaleVector); }
+    public void setScale(Vector3f scaleVector) { scale = scaleVector; }
     public float[] getVertices()
     {
         return Arrays.copyOf(vertices, vertices.length);
@@ -160,16 +178,34 @@ public class Mesh
             masterIndexOffsets[i] += offset;
     }
 
-    public void setMeshMatrix(float[] worldMatrix, int GL_worldMatrixLocation)
+    public void setMeshMatrix()
     {
-        Matrix.translateM(worldMatrix, 0, translation.x, translation.y, translation.z);
-        Matrix.scaleM(worldMatrix, 0, scale.x, scale.y, scale.z);
-        Utilities.rotateMatrix3Axes(worldMatrix, rotation);
-        GLES30.glUniformMatrix4fv(GL_worldMatrixLocation, 1, false, floatArrayToBuffer(worldMatrix, true));
+        if(billboard)
+        {
+            GLES30.glUniform1i(Shader.GL_billboardUniLocation, GLES30.GL_TRUE);
+            GLES30.glUniform2f(Shader.GL_billboardScaleUniLocation, scale.x, scale.y);
+            GLES30.glUniform3f(Shader.GL_billboardPosUniLocation, translation.x, translation.y, translation.z);
+            GLES30.glUniform1f(Shader.GL_billboardRotationUniLocation, this.rotation.x);
+            GLES30.glUniformMatrix4fv(Shader.GL_worldMatrixLocation, 1, false, floatArrayToBuffer(Renderer.worldMatrix, true));
+
+            return;
+        }
+        GLES30.glUniform1i(Shader.GL_billboardUniLocation, GLES30.GL_FALSE);
+        Matrix.translateM(Renderer.worldMatrix, 0, translation.x, translation.y, translation.z);
+        Matrix.scaleM(Renderer.worldMatrix, 0, scale.x, scale.y, scale.z);
+        Utilities.rotateMatrix3Axes(Renderer.worldMatrix, rotation);
+        GLES30.glUniformMatrix4fv(Shader.GL_worldMatrixLocation, 1, false, floatArrayToBuffer(Renderer.worldMatrix, true));
     }
-    public void drawMesh(float[] worldMatrix, int GL_worldMatrixLocation)
+
+    public void setEnvColor(Vector4f newColor) { this.envColor = newColor; }
+
+    public void drawMesh()
     {
-        setMeshMatrix(worldMatrix, GL_worldMatrixLocation);
+        setMeshMatrix();
+        if(!depthBufferWritingEnabled) GLES30.glDepthMask(false);
+        else GLES30.glDepthMask(true);
+        GLES30.glUniform4f(Shader.GL_envColorUniLocation,
+                this.envColor.x, this.envColor.y, this.envColor.z, this.envColor.w);
         for(int i = 0; i<materials.length; i++)
         {
             GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, getTextureID(i));
@@ -181,6 +217,17 @@ public class Mesh
         }
         if(subMeshes.size() > 0) //draw all subMeshes
             for(Mesh sub : subMeshes)
-                sub.drawMesh(worldMatrix, GL_worldMatrixLocation);
+                sub.drawMesh();
+    }
+    public Mesh cloneMesh()
+    {
+        return new Mesh(
+                this.getVertices(),
+                this.masterIndices,
+                this.materials,
+                Arrays.copyOf(this.masterIndexOffsets, this.masterIndexOffsets.length),
+                polygonType,
+                this.textureIDs,
+                this.indicesPerMaterial);
     }
 }

@@ -8,12 +8,15 @@ import org.joml.Vector3f;
 import org.joml.Vector4f;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
 
 import core.Scene;
 import core.collision.Collision;
 import core.collision.CollisionTriangle;
 import functions.OtherConstants;
 import graphics.Mesh;
+import graphics.Shader;
 import graphics.Utilities;
 import core.Renderer;
 
@@ -25,15 +28,14 @@ public class PlayerObject extends GameObject
 {
     float fixedSpeed;
     int maxPathSize = 1;
-    public PlayerObject(Mesh mesh, Vector3f position, Vector3f rotation, float scale, float speed, float radius)
+    public PlayerObject(Mesh mesh, Vector3f position, Vector3f rotation, float scale, float speed, float radius, int sceneIndex)
     {
-        super(mesh, position, rotation, scale, radius);
+        super(mesh, position, rotation, scale, radius, sceneIndex);
         this.fixedSpeed = speed;
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
-    public void moveForward(float angle, float magnitude, Vector3f cameraPosition, Scene currentScene)
-    {
+    public void moveForward(float angle, float magnitude, Vector3f cameraPosition, Scene currentScene) throws ClassNotFoundException {
         //Do not ask how this works because I cannot answer
         angle *= OtherConstants.DEG2RAD; //Convert deg to rads
         Vector3f forward = new Vector3f();
@@ -54,8 +56,7 @@ public class PlayerObject extends GameObject
         collisionCheck(currentScene, trajectory);
     }
 
-    private void collisionCheck(Scene scene, Vector3f trajectory)
-    {
+    private void collisionCheck(Scene scene, Vector3f trajectory) throws ClassNotFoundException {
         ArrayList<Integer> levelMeshIndices = scene.getLevelMeshIndices();
         ArrayList<Mesh> levelMeshes = scene.getAllMeshes();
 
@@ -72,10 +73,10 @@ public class PlayerObject extends GameObject
             }
         }
         Vector3f direction = new Vector3f(trajectory).sub(position).normalize();
-        angularVector = Utilities.vectorNormToAngularVector(direction);
+        angularVector = Utilities.vectorNormToAngularVector(direction, new Vector3f(0,0,1));
         setNewPosition(trajectory);
         //TODO: Object collision
-        ArrayList<GameObject> objects = scene.getObjects();
+        LinkedList<GameObject> objects = scene.getObjects();
         float playerRadius = getInteractionRadius();
         for(GameObject object : objects)
         {
@@ -84,7 +85,7 @@ public class PlayerObject extends GameObject
             if(Collision.spheresCollide(position, object.position, playerRadius, objectRadius))
             {
                 System.out.println("You touched the object");
-                object.delete();
+                object.collectibleCollected(scene);
                 maxPathSize++;
             }
         }
@@ -113,21 +114,39 @@ public class PlayerObject extends GameObject
     private void addToPath(Vector3f pos)
     {
         if(subObjects.size() > maxPathSize) subObjects.removeFirst();
-        subObjects.add(new PlayerObject(getMeshReference(), pos, rotation, scale, fixedSpeed, getInteractionRadius()));
+        subObjects.add(new PlayerObject(getMeshReference(), pos, rotation, scale, fixedSpeed, getInteractionRadius(), meshSceneIndex));
         subObjects.getLast().setAngularVector(angularVector);
     }
 
     public float getSpeed(){ return fixedSpeed; }
     public Vector4f getAngularVector() {return angularVector; }
     public void setPathSize(int newSize) {maxPathSize = newSize; }
-    public void placeObjectInWorld(float[] worldMatrix, int GL_worldMatrixLocation)
+    public void placeObjectInWorld()
     {
-        Matrix.setIdentityM(worldMatrix, 0);
-        Vector3f pos = position;
+        Matrix.setIdentityM(Renderer.worldMatrix, 0);
         float objectScale = scale;
-        Matrix.translateM(worldMatrix, 0, pos.x, pos.y, pos.z);
-        Matrix.scaleM(worldMatrix, 0, objectScale, objectScale, objectScale);
-        Matrix.rotateM(worldMatrix, 0, angularVector.w, angularVector.x, angularVector.y, angularVector.z);
-        GLES30.glUniformMatrix4fv(GL_worldMatrixLocation, 1, false, floatArrayToBuffer(worldMatrix, true));
+        Matrix.translateM(Renderer.worldMatrix, 0, position.x, position.y, position.z);
+        Matrix.scaleM(Renderer.worldMatrix, 0, objectScale, objectScale, objectScale);
+        Matrix.rotateM(Renderer.worldMatrix, 0, angularVector.w, angularVector.x, angularVector.y, angularVector.z);
+        GLES30.glUniformMatrix4fv(
+                Shader.GL_worldMatrixLocation,
+                1,
+                false,
+                floatArrayToBuffer(Renderer.worldMatrix, true)
+        );
+    }
+    public void drawObject()
+    {
+        float[] storeMatrix = Arrays.copyOf(Renderer.worldMatrix, Renderer.worldMatrix.length); //store copy
+        drawObjectMesh();
+        for(GameObject subObject : getSubObjects()) //draw all subObjects
+            subObject.drawObjectMesh();
+        Renderer.worldMatrix = storeMatrix; //restore
+    }
+
+    public void drawObjectMesh()
+    {
+        placeObjectInWorld();
+        getMeshReference().drawMesh();
     }
 }

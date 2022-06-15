@@ -10,8 +10,10 @@ import core.objects.PlayerObject;
 import core.objects.behaviours.behavFunc.DirectionNormalToObject;
 import core.objects.behaviours.behavFunc.RotateAwayFromObject;
 
-public class RotateY {
-    public static void main(BehavObject object, Scene currentScene) {
+public class RotateY
+{
+    public static void main(BehavObject object, Scene currentScene)
+    {
         Vector3f newPos = new Vector3f(object.position);
         PlayerObject player = currentScene.getPlayer();
         Vector3f dirToPlayer = DirectionNormalToObject.main(object, player);

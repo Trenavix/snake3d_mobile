@@ -13,6 +13,7 @@ public class Camera extends Entity
     public Vector2f rotation;
     float sensitivity;
     float distancing;
+    public Vector3f directionNormal;
     private final static float maxVertAngle = 1.56f;
     public Camera(Vector3f position, Vector2f orientation, float sensitivity, float distancing)
     {
@@ -28,6 +29,7 @@ public class Camera extends Entity
     {
         lookAt = pos;
         position = Utilities.orientationToDirectionVector(rotation);
+        directionNormal = new Vector3f(position);
         position.mul(-1.0f*distancing);
         position.add(lookAt);
         Matrix.setLookAtM(viewMatrix, 0,

@@ -7,12 +7,14 @@ import android.os.Build;
 import androidx.annotation.RequiresApi;
 
 import org.joml.Vector2f;
+import org.w3c.dom.Text;
 
 import functions.Buffers;
 
 public class Texture
 {
     final static int bytesInPixel = 4; //RGBA32
+    TextureWrapMode wrapMode;
     private int ID;
     private int width;
     private int height;
@@ -37,11 +39,19 @@ public class Texture
         }
         this.rawData = texDataBytes;
     }
+    public Texture(int width, int height, byte[] data, byte wrapMode)
+    {
+        this.width = width;
+        this.height = height;
+        this.rawData = data;
+        this.wrapMode = new TextureWrapMode(wrapMode);
+    }
     public Texture(int width, int height, byte[] data)
     {
         this.width = width;
         this.height = height;
         this.rawData = data;
+        this.wrapMode = new TextureWrapMode((byte)0);
     }
     public int getWidth()
     {
@@ -65,9 +75,32 @@ public class Texture
     public void setStandardMapping()
     {
         GLES30.glUniform1i(Shader.GL_sphereMappingUniLocation, GLES30.GL_FALSE);
-        GLES30.glTexParameteri(ID, GLES30.GL_TEXTURE_WRAP_S, GLES30.GL_REPEAT);
-        GLES30.glTexParameteri(ID, GLES30.GL_TEXTURE_WRAP_T, GLES30.GL_REPEAT);
-        GLES30.glTexParameteri(ID, GLES30.GL_TEXTURE_WRAP_R, GLES30.GL_REPEAT);
+        setWrappingInGL();
+    }
+    public void setWrappingInGL()
+    {
+        //S Mode
+        if (this.wrapMode.clampS)
+            GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_S, GLES30.GL_CLAMP_TO_EDGE);
+        else if (this.wrapMode.mirrorS)
+            GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_S, GLES30.GL_MIRRORED_REPEAT);
+        else GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_S, GLES30.GL_REPEAT);
+        //T Mode
+        if (wrapMode.clampT)
+            GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_T, GLES30.GL_CLAMP_TO_EDGE);
+        else if (wrapMode.mirrorT)
+            GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_T, GLES30.GL_MIRRORED_REPEAT);
+        else GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_T, GLES30.GL_REPEAT);
+        //R Mode
+        if (wrapMode.clampR)
+            GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_R, GLES30.GL_CLAMP_TO_EDGE);
+        else if (wrapMode.mirrorR)
+            GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_R, GLES30.GL_MIRRORED_REPEAT);
+        else GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_R, GLES30.GL_REPEAT);
+    }
+    public void setWrappingValue(byte wrapMode)
+    {
+        this.wrapMode = new TextureWrapMode(wrapMode);
     }
     public int loadMaterialIntoGL(int[] textureIDs, int ID)
     {
@@ -75,9 +108,6 @@ public class Texture
         GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, textureIDs[ID]);
         GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MIN_FILTER, GLES30.GL_LINEAR);
         GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MAG_FILTER, GLES30.GL_LINEAR);
-        GLES30.glTexParameteri(ID, GLES30.GL_TEXTURE_WRAP_S, GLES30.GL_REPEAT);
-        GLES30.glTexParameteri(ID, GLES30.GL_TEXTURE_WRAP_T, GLES30.GL_REPEAT);
-        GLES30.glTexParameteri(ID, GLES30.GL_TEXTURE_WRAP_R, GLES30.GL_REPEAT);
         GLES30.glTexImage2D
                 (
                         GLES30.GL_TEXTURE_2D,
@@ -89,8 +119,7 @@ public class Texture
                         GLES30.GL_UNSIGNED_BYTE,
                         Buffers.byteArrayToBuffer(this.getRawData())
                 );
-        //if (textures[0] == 0) throw new RuntimeException("Error loading texture.");
-        this.ID = ID;
+        this.ID = textureIDs[ID];
         return textureIDs[ID];
     }
     public void setRawData(byte[] data)
