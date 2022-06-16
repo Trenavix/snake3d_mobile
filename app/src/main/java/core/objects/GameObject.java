@@ -26,8 +26,8 @@ public class GameObject extends Entity
     public float scale;
     private float radius; //interaction radius i.e. core.collision
     LinkedList<GameObject> subObjects;
-    boolean deleteFromScene = false;
     public int meshSceneIndex;
+    public Status status;
 
     public GameObject(Mesh mesh, Vector3f position, Vector3f rotation, float scale, float radius, int sceneIndex)
     {
@@ -39,6 +39,7 @@ public class GameObject extends Entity
         this.radius = radius;
         this.subObjects = new LinkedList<GameObject>();
         this.meshSceneIndex = sceneIndex;
+        this.status = Status.LIVE;
     }
     private void setMeshIndex(Scene scene, int idx) { this.meshSceneIndex = idx; }
     public void placeObjectInWorld()
@@ -75,11 +76,6 @@ public class GameObject extends Entity
         mesh.drawMesh();
     }
 
-    public void collectibleCollected(Scene currentScene) throws ClassNotFoundException
-    {
-        swapObject(new BehavObject(currentScene.getMesh(4), new Vector3f(this.position), new Vector3f(), 0.5f, 0.0f,4,  "Sparkles"), currentScene);
-    }
-
     public void swapObject(GameObject newObject, Scene scene)
     {
         scene.addObject(newObject);
@@ -93,8 +89,7 @@ public class GameObject extends Entity
     public void setAngularVector(Vector4f newVector) {angularVector = newVector; }
     public LinkedList<GameObject> getSubObjects() {return subObjects; }
     public Mesh getMeshReference() {return mesh; }
-    public void delete(){ this.deleteFromScene = true; }
-    public boolean isReadyForDeletion() { return deleteFromScene; }
+    public void delete(){ this.status = Status.DEAD; }
     public void setNewPosition(Vector3f newPos) {position = newPos;}
     public void setMeshFromScene(int index, Scene scene)
     {

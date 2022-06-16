@@ -15,7 +15,7 @@ public class Mesh32Commands
     public static final byte CMD_VertexAttribCount = 3; //How many attributes per vertex
     public static final byte CMD_PolygonIndexCount = 4; //How many indices per polygon
     //BYTES per pixel(-1). Default 4 (3 in raw data), max is 256 (0xFF).
-    //Allows 1,073,741,824 max 4Bpp texels to be loaded if loading in as 256Bpp
+    //Allows 1,073,741,824 max 4Bpp texels to be loaded if loading in as 256Bpp (32768x32768 or 32K)
     public static final byte CMD_Tex_Bpp = 5;
     public static final byte CMD_Material = 6; //Create new Material with String Name
     public static final byte CMD_Texture = 7; //Prepare new Texture with grid size to add to last material. Must follow with data

@@ -6,66 +6,59 @@
 #model_grid format: width height partitions_x partitions_y offset_y hexColour (generates GameObject)
 
 #mesh 0:
-#model_obj models/OBJ/PiranhaFish/79f0_centred.obj models/OBJ/PiranhaFish/79f0_centred.mtl models/OBJ/PiranhaFish/ 0 1.1 0.001
-#model_obj models/OBJ/Snorkel/7f78.obj models/OBJ/Snorkel/7f78.mtl models/OBJ/Snorkel/ 0 0.001
-#model_obj models/OBJ/cuccoo/cuccoo.obj models/OBJ/cuccoo/cuccoo.mtl models/OBJ/cuccoo/ 0 1.1 0.03
 #mesh32 models/cuccoo.mesh32 1.0
-mesh32 models/Coin3.mesh32 0.04
+mesh32 models/Coin.mesh32 0.04
 
 #mesh 1:
-#model_obj models/OBJ/BG_FP/9cc8.obj models/OBJ/BG_FP/9cc8.mtl models/OBJ/BG_FP/ 0 1.0 1
-#model_obj models/OBJ/SM/BG/9cb8.obj models/OBJ/SM/BG/9cb8.mtl models/OBJ/SM/BG/ 0 0.004
-#model_obj models/OBJ/SkyBoxes/Metroid/Space.obj models/OBJ/SkyBoxes/Metroid/Space2.mtl models/OBJ/SkyBoxes/Metroid/ 0 0 3
 mesh32 models/9cc8.mesh32 1.0
 
 #mesh 2:
 #mesh32 models/box.mesh32 0.01
 #mesh32 models/KF.mesh32 4.0
 #mesh32 models/fountain.mesh32 5.0
-mesh32 models/TTC.mesh32 0.004
-mesh32 models/TTC_B.mesh32 0.004
-#mesh32 models/SM_A.mesh32 0.004
-#mesh32 models/SM_B2.mesh32 0.004
+#mesh32 models/TTC.mesh32 0.004
+#mesh32 models/TTC_B.mesh32 0.004
+mesh32 models/SM_A.mesh32 0.004
+mesh32 models/SM_B2.mesh32 0.004
 
-#model_grid 10.0 10.0 25 25 0.0 FFFF00FF
 mesh32 models/sparkle.mesh32 0.1
-#mesh32 models/Coin3.mesh32 0.04
+#model_grid 10.0 10.0 25 25 0.0 FFFF00FF
 
 BG_model 1
 level_model 2
 level_model 3
 
 player 0 0.0 0.0 0.0 0.0 0.0 0.0 0.500
-object 0 0.0 6.0 0.0 0.0 0.0 0.0 1 0.22 RotateY
-#object 4 0.0 12.0 0.0 0.0 0.0 0.0 0.25 0.22 Sparkle
-object 0 0.0 8.0 0.0 0.0 0.0 0.0 1 0.2 RotateY
-object 0 0.0 10.0 0.0 0.0 0.0 0.0 1 0.2 RotateY
-object 0 2.0 10.0 0.0 0.0 0.0 0.0 1 0.2 RotateY
-object 0 -2.0 10.0 0.0 0.0 0.0 0.0 1 0.2 RotateY
-object 0 0.0 10.0 2.0 0.0 0.0 0.0 1 0.2 RotateY
-object 0 0.0 10.0 -2.0 0.0 0.0 0.0 1 0.2 RotateY
-object 0 2.0 10.0 2.0 0.0 0.0 0.0 1 0.2 RotateY
-object 0 2.0 10.0 4.0 0.0 0.0 0.0 1 0.2 RotateY
-object 0 2.0 10.0 6.0 0.0 0.0 0.0 1 0.2 RotateY
-object 0 2.0 10.0 8.0 0.0 0.0 0.0 1 0.2 RotateY
-object 0 2.0 4.0 10.0 0.0 0.0 0.0 1 0.2 RotateY
-object 0 4.0 2.0 2.0 0.0 0.0 0.0 1 0.2 RotateY
-object 0 6.0 8.0 2.0 0.0 0.0 0.0 1 0.2 RotateY
-object 0 4.0 6.0 0.0 0.0 0.0 0.0 1 0.2 RotateY
-object 0 6.0 8.0 0.0 0.0 0.0 0.0 1 0.2 RotateY
-object 0 8.0 10.0 0.0 0.0 0.0 0.0 1 0.2 RotateY
-object 0 2.0 10.0 0.0 0.0 0.0 0.0 1 0.2 RotateY
-object 0 -12.0 10.0 0.0 0.0 0.0 0.0 1 0.2 RotateY
-object 0 10.0 10.0 2.0 0.0 0.0 0.0 1 0.2 RotateY
-object 0 12.0 10.0 -2.0 0.0 0.0 0.0 1 0.2 RotateY
-object 0 14.0 10.0 2.0 0.0 0.0 0.0 1 0.2 RotateY
-object 0 16.0 10.0 4.0 0.0 0.0 0.0 1 0.2 RotateY
-object 0 -4.0 10.0 6.0 0.0 0.0 0.0 1 0.2 RotateY
-object 0 -6.0 10.0 8.0 0.0 0.0 0.0 1 0.2 RotateY
-object 0 -8.0 4.0 10.0 0.0 0.0 0.0 1 0.2 RotateY
-object 0 -10.0 2.0 2.0 0.0 0.0 0.0 1 0.2 RotateY
-object 0 14.0 8.0 1.0 0.0 0.0 0.0 1 0.2 RotateY
-object 0 0.0 6.0 1.0 0.0 0.0 0.0 1 0.2 RotateY
-object 0 0.0 8.0 1.0 0.0 0.0 0.0 1 0.2 RotateY
-object 0 0.0 10.0 1.0 0.0 0.0 0.0 1 0.2 RotateY
-object 0 2.0 10.0 1.0 0.0 0.0 0.0 1 0.2 RotateY
+object 0 0.0 6.0 0.0 0.0 0.0 0.0 1 0.22 Collectible
+object 0 0.0 12.0 0.0 0.0 0.0 0.0 0.25 0.22 PlayerPosPointLight
+object 0 0.0 8.0 0.0 0.0 0.0 0.0 1 0.2 Collectible
+object 0 0.0 10.0 0.0 0.0 0.0 0.0 1 0.2 Collectible
+object 0 2.0 10.0 0.0 0.0 0.0 0.0 1 0.2 Collectible
+object 0 -2.0 10.0 0.0 0.0 0.0 0.0 1 0.2 Collectible
+object 0 0.0 10.0 2.0 0.0 0.0 0.0 1 0.2 Collectible
+object 0 0.0 10.0 -2.0 0.0 0.0 0.0 1 0.2 Collectible
+object 0 2.0 10.0 2.0 0.0 0.0 0.0 1 0.2 Collectible
+object 0 2.0 10.0 4.0 0.0 0.0 0.0 1 0.2 Collectible
+object 0 2.0 10.0 6.0 0.0 0.0 0.0 1 0.2 Collectible
+object 0 2.0 10.0 8.0 0.0 0.0 0.0 1 0.2 Collectible
+object 0 2.0 4.0 10.0 0.0 0.0 0.0 1 0.2 Collectible
+object 0 4.0 2.0 2.0 0.0 0.0 0.0 1 0.2 Collectible
+object 0 6.0 8.0 2.0 0.0 0.0 0.0 1 0.2 Collectible
+object 0 4.0 6.0 0.0 0.0 0.0 0.0 1 0.2 Collectible
+object 0 6.0 8.0 0.0 0.0 0.0 0.0 1 0.2 Collectible
+object 0 8.0 10.0 0.0 0.0 0.0 0.0 1 0.2 Collectible
+object 0 2.0 10.0 0.0 0.0 0.0 0.0 1 0.2 Collectible
+object 0 -12.0 10.0 0.0 0.0 0.0 0.0 1 0.2 Collectible
+object 0 10.0 10.0 2.0 0.0 0.0 0.0 1 0.2 Collectible
+object 0 12.0 10.0 -2.0 0.0 0.0 0.0 1 0.2 Collectible
+object 0 14.0 10.0 2.0 0.0 0.0 0.0 1 0.2 Collectible
+object 0 16.0 10.0 4.0 0.0 0.0 0.0 1 0.2 Collectible
+object 0 -4.0 10.0 6.0 0.0 0.0 0.0 1 0.2 Collectible
+object 0 -6.0 10.0 8.0 0.0 0.0 0.0 1 0.2 Collectible
+object 0 -8.0 4.0 10.0 0.0 0.0 0.0 1 0.2 Collectible
+object 0 -10.0 2.0 2.0 0.0 0.0 0.0 1 0.2 Collectible
+object 0 14.0 8.0 1.0 0.0 0.0 0.0 1 0.2 Collectible
+object 0 0.0 6.0 1.0 0.0 0.0 0.0 1 0.2 Collectible
+object 0 0.0 8.0 1.0 0.0 0.0 0.0 1 0.2 Collectible
+object 0 0.0 10.0 1.0 0.0 0.0 0.0 1 0.2 Collectible
+object 0 2.0 10.0 1.0 0.0 0.0 0.0 1 0.2 Collectible

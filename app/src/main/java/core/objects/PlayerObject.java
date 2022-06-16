@@ -4,6 +4,7 @@ import android.opengl.GLES30;
 import android.opengl.Matrix;
 import android.os.Build;
 
+import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
@@ -53,42 +54,9 @@ public class PlayerObject extends GameObject
         Vector3f trajectory = new Vector3f(offset).mul(magnitude).add(position);
         if(magnitude <= 0.0f) trajectory = new Vector3f(position); //ignore everything if no analog input
         trajectory.add(autoMove);
-        collisionCheck(currentScene, trajectory);
-    }
-
-    private void collisionCheck(Scene scene, Vector3f trajectory) throws ClassNotFoundException {
-        ArrayList<Integer> levelMeshIndices = scene.getLevelMeshIndices();
-        ArrayList<Mesh> levelMeshes = scene.getAllMeshes();
-
-        for(Integer idx : levelMeshIndices)
-        {
-            ArrayList<CollisionTriangle> triangles = levelMeshes.get(idx).colTriangles;
-            boolean hittingTris = true;
-            while(hittingTris)
-            {
-                Vector3f newTrajectory = Collision.testTriangles(triangles, position, trajectory, getInteractionRadius());
-                if(newTrajectory != null) //Func returns null pt when no triangle core.collision
-                    trajectory = newTrajectory;
-                else hittingTris = false;
-            }
-        }
         Vector3f direction = new Vector3f(trajectory).sub(position).normalize();
         angularVector = Utilities.vectorNormToAngularVector(direction, new Vector3f(0,0,1));
-        setNewPosition(trajectory);
-        //TODO: Object collision
-        LinkedList<GameObject> objects = scene.getObjects();
-        float playerRadius = getInteractionRadius();
-        for(GameObject object : objects)
-        {
-            if(object.equals(this)) continue; //player object!
-            float objectRadius = object.getInteractionRadius();
-            if(Collision.spheresCollide(position, object.position, playerRadius, objectRadius))
-            {
-                System.out.println("You touched the object");
-                object.collectibleCollected(scene);
-                maxPathSize++;
-            }
-        }
+        Collision.collisionCheck(currentScene, this, trajectory);
     }
 
     public void setNewPosition(Vector3f trajectory)
@@ -121,6 +89,7 @@ public class PlayerObject extends GameObject
     public float getSpeed(){ return fixedSpeed; }
     public Vector4f getAngularVector() {return angularVector; }
     public void setPathSize(int newSize) {maxPathSize = newSize; }
+    public int getPathSize() {return this.maxPathSize;}
     public void placeObjectInWorld()
     {
         Matrix.setIdentityM(Renderer.worldMatrix, 0);

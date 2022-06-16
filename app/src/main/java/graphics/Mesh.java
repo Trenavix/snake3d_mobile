@@ -35,6 +35,7 @@ public class Mesh
     public Vector4f envColor = new Vector4f(1.0f, 1.0f, 1.0f, 1.0f);//General purpose color
     public boolean billboard = false;
     public boolean depthBufferWritingEnabled = true;
+    public boolean drawOnTopOfAllGeometry = false;
 
     public Mesh(float[] vertices, int[][] indices, Material[] materials, int polygonType, int[][] collisionIndices, float interactionRadius)
     {
@@ -204,6 +205,8 @@ public class Mesh
         setMeshMatrix();
         if(!depthBufferWritingEnabled) GLES30.glDepthMask(false);
         else GLES30.glDepthMask(true);
+        if(drawOnTopOfAllGeometry) GLES30.glDepthFunc(GLES30.GL_ALWAYS);
+        else GLES30.glDepthFunc(GLES30.GL_LESS);
         GLES30.glUniform4f(Shader.GL_envColorUniLocation,
                 this.envColor.x, this.envColor.y, this.envColor.z, this.envColor.w);
         for(int i = 0; i<materials.length; i++)

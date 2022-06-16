@@ -10,7 +10,9 @@ import java.util.LinkedList;
 
 import core.objects.BehavObject;
 import core.objects.GameObject;
+import core.objects.LightObject;
 import core.objects.PlayerObject;
+import core.objects.Status;
 import functions.DoubleObject;
 import functions.conversions.Mesh32ToMesh;
 import functions.conversions.OBJ2Mesh;
@@ -126,31 +128,8 @@ public class Scene
     @RequiresApi(api = Build.VERSION_CODES.N)
     public void drawScene(float[] worldMatrix, int GL_worldMatrixLocation, int GL_alphaTestUniLocation, Vector3f camPosition) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException
     {
-        GLES30.glUniform1f(GL_alphaTestUniLocation, 0.0f); //alphaTest disable
-        GLES30.glDepthMask(false); //BG Model //Skip depthbuffer writing for BG
-        Matrix.translateM(worldMatrix, 0, camPosition.x, camPosition.y, camPosition.z); //Place BG at cameraPos
-        GLES30.glUniformMatrix4fv(GL_worldMatrixLocation, 1, false, floatArrayToBuffer(worldMatrix, true)); //update worldMtx
-        if(backgroundMeshIndex != null) getMesh(backgroundMeshIndex).drawMesh(); //draw BG
-        Matrix.setIdentityM(worldMatrix, 0); //reset worldMtx (start of frame-build)
-        GLES30.glUniformMatrix4fv(GL_worldMatrixLocation, 1, false, floatArrayToBuffer(worldMatrix, true));
-        GLES30.glDepthMask(true);
-        for(int i=0; i<levelMeshIndices.size(); i++) //Draw level models
-        {
-            if(i == alphaMeshIndex) continue; //Alpha model
-            getMesh(levelMeshIndices.get(i)).drawMesh();
-        }
-
-        if(levelMeshIndices.size() > 1)
-        {
-            GLES30.glDisable(GLES30.GL_CULL_FACE);
-            getMesh(levelMeshIndices.get(alphaMeshIndex)).drawMesh();
-            GLES30.glEnable(GLES30.GL_CULL_FACE);
-        }
-        GLES30.glEnable(GLES30.GL_DEPTH_TEST);
-        GLES30.glDepthRangef(0.f, 1.f);
-        GLES30.glDepthMask(true);
-        GLES30.glDepthFunc(GLES30.GL_LESS);
-        if(pendingObjects.size() >0)
+        //PROCESS OBJECTS IN PARALLEL FIRST
+        if(pendingObjects.size() >0) //Add all pending objects
         {
             for(GameObject object : pendingObjects)
                 objects.addLast(object);
@@ -158,40 +137,63 @@ public class Scene
         }
         objects.parallelStream().forEach((object) ->
         {
-            if(object.getClass().equals(BehavObject.class))
+            Class objectClass = object.getClass();
+            if(objectClass.equals(BehavObject.class))
             {
-                try {((BehavObject)object).runBehaviour(this);}
+                try
+                {
+                    ((BehavObject)object).runBehaviour(this);
+                }
                 catch (NoSuchMethodException e) {e.printStackTrace();}
                 catch (InvocationTargetException e) {e.printStackTrace();}
                 catch (IllegalAccessException e) { e.printStackTrace(); }
             }
         });
-        //GLES30.glDepthMask(false);
-        for(int i=0; i<objects.size(); i++)
-            objects.get(i).drawObject();
+        Shader.updateLightCountInGL();
+        //NOW DRAW THE SCENE WITH OBJECTS
+        Shader.currentLightCount = 0;
+        GLES30.glUniform1f(GL_alphaTestUniLocation, 0.0f); //alphaTest disable
+        Matrix.translateM(worldMatrix, 0, camPosition.x, camPosition.y, camPosition.z); //Place BG at cameraPos
+        GLES30.glUniformMatrix4fv(GL_worldMatrixLocation, 1, false, floatArrayToBuffer(worldMatrix, true)); //update worldMtx
+        if(backgroundMeshIndex != null) getMesh(backgroundMeshIndex).drawMesh(); //draw BG
+        Matrix.setIdentityM(worldMatrix, 0); //reset worldMtx (start of frame-build)
+        GLES30.glUniformMatrix4fv(GL_worldMatrixLocation, 1, false, floatArrayToBuffer(worldMatrix, true));
+        for(int i=0; i<levelMeshIndices.size(); i++) //Draw level models
+        {
+            if(i == alphaMeshIndex) continue; //Alpha model
+            getMesh(levelMeshIndices.get(i)).drawMesh();
+        }
+        GLES30.glEnable(GLES30.GL_DEPTH_TEST);
+        GLES30.glDepthRangef(0.f, 1.f);
         GLES30.glDepthMask(true);
+        GLES30.glDepthFunc(GLES30.GL_LESS);
+        for(GameObject object : objects)
+            object.drawObject();
+        if(levelMeshIndices.size() > 1)
+        {
+            //getMesh(levelMeshIndices.get(alphaMeshIndex)).depthBufferWritingEnabled = false;
+            //getMesh(levelMeshIndices.get(alphaMeshIndex)).drawOnTopOfAllGeometry = true;
+            GLES30.glDisable(GLES30.GL_CULL_FACE);
+            getMesh(levelMeshIndices.get(alphaMeshIndex)).drawMesh();
+            GLES30.glEnable(GLES30.GL_CULL_FACE);
+        }
         Matrix.setIdentityM(worldMatrix, 0); //Reset worldMtx after last object!
         GLES30.glUniformMatrix4fv(GL_worldMatrixLocation, 1, false, floatArrayToBuffer(worldMatrix, true));
-        //GLES30.glUniform1f(GL_alphaTestUniLocation, 0.1f);
+        GLES30.glUniform1f(GL_alphaTestUniLocation, 0.1f);
+
+        //Object removal and mesh garbage collection below:
         for(int i=0; i<objects.size(); i++)
-            if(objects.get(i).isReadyForDeletion())
+            if(objects.get(i).status == Status.DEAD)
             {
                 Mesh objMesh = objects.get(i).getMeshReference();
-                boolean meshIsBeingUsed = false;
                 objects.remove(i);
                 for(GameObject object: objects)
-                {
                     if(object.getMeshReference().equals(objMesh)) return;
-                }
                 int trashIdx = meshes.indexOf(objMesh);
                 meshes.remove(trashIdx); //delete mesh
                 for(GameObject object : objects)
-                {
                     if(object.meshSceneIndex > trashIdx) object.meshSceneIndex--;
-                }
-
             }
-
     }
 
     public Camera getCamera()

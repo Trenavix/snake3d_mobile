@@ -19,6 +19,10 @@ import graphics.Mesh;
 import org.apache.commons.lang3.ArrayUtils;
 import org.joml.Vector3f;
 
+//Experimental and deprecated class!
+//Please convert models to Mesh32 beforehand!
+//This will dramatically increase scene startup times to convert the models
+
 public class OBJ2Mesh
 {
     @RequiresApi(api = Build.VERSION_CODES.N)

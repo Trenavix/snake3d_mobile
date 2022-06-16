@@ -6,10 +6,7 @@ import core.Scene;
 import core.objects.GameObject;
 import functions.OtherConstants;
 
-public class SpawnObject
+public class Generic
 {
-    public static void main(GameObject object, Scene currentScene)
-    {
 
-    }
 }

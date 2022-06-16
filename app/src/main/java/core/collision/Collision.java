@@ -104,7 +104,7 @@ public class Collision
         return null;
     }
 
-    public static void collisionCheck(Scene scene, GameObject object, Vector3f trajectory)
+    public static GameObject collisionCheck(Scene scene, GameObject object, Vector3f trajectory)
     {
         ArrayList<Integer> levelMeshIndices = scene.getLevelMeshIndices();
         ArrayList<Mesh> levelMeshes = scene.getAllMeshes();
@@ -120,24 +120,21 @@ public class Collision
                 else hittingTris = false;
             }
         }
-        //Vector3f direction = new Vector3f(trajectory).sub(object.position).normalize();
-        //object.setAngularVector(Utilities.vectorNormToAngularVector(direction));
-        object.setNewPosition(trajectory);
         //TODO: Object collision
         LinkedList<GameObject> objects = scene.getObjects();
-        /*float objectRadius = object.getInteractionRadius();
+        float objectRadius = object.getInteractionRadius();
         for(GameObject sceneObject : objects)
         {
-            if(sceneObject.equals(object)) continue; //current object!
-            float otherRadius = object.getInteractionRadius();
-            if(Collision.spheresCollide(object.position, sceneObject.position, objectRadius, otherRadius))
+            if(object.equals(sceneObject)) continue; //current object!
+            float sceneObjectRadius = sceneObject.getInteractionRadius();
+            if(Collision.spheresCollide(object.position, sceneObject.position, objectRadius, sceneObjectRadius))
             {
-                //System.out.println("You touched the object");
-                //object.delete();
-                //maxPathSize++;
+                System.out.println("You touched the object");
+                object.setNewPosition(trajectory);
+                return sceneObject;
             }
-        }*/
+        }
+        object.setNewPosition(trajectory);
+        return null;
     }
-
-
 }

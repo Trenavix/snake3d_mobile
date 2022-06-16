@@ -1,11 +1,13 @@
+const int MAX_POINT_LIGHTS = 8;
 attribute vec3 vertPos;
 attribute vec2 vertUV;
 attribute vec4 vertColor;
 attribute vec3 vertNormal;
-varying vec4 fragColor;
+varying vec4 vertFragColor;
 varying vec2 fragUV;
 varying lowp vec3 fragNormal;
 varying lowp vec3 fragPosition;
+/*varying lowp vec3 u_LightPositions[MAX_POINT_LIGHTS];*/
 varying vec2 vN;
 uniform mat4 mWorld;
 uniform mat4 mView;
@@ -20,7 +22,7 @@ uniform vec2 u_Billboard_Scale;
 uniform mediump float u_Billboard_Rotation;
 void main()
 {
-    fragColor = vertColor;
+    vertFragColor = vertColor;
     fragUV = vertUV;
     /*SphereMapping*/
     if(sphereMapping)
@@ -47,7 +49,6 @@ void main()
     vec3 CameraUp_worldspace = vec3(mView[0][1], mView[1][1], mView[2][1]);
     vec2 rotationVector = vec2(cos(u_Time/50.0), sin(u_Time/50.0));
     fragNormal = (mWorld * vec4(vertNormal, 0.0)).xyz;
-
     if(u_Billboard)
     {
         vec3 p = vertPos;
