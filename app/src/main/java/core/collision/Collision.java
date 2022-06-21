@@ -80,7 +80,7 @@ public class Collision
             float movementLength = movement.length();
             if(triangle.getCentroidPos().sub(posCopy).length() > movementLength+biggerRadius+triangle.getMaxRadius()) continue;
             Vector3f surfNorm = triangle.getSurfaceNormal();
-            Vector3f[] vertices = triangle.getVerticesAsVectors();
+            Vector3f[] vertices = triangle.getVertices();
             Vector3f triPt = triangle.closestPoint(newTrajectory);
             float dotProduct = movement.dot(surfNorm);
             if(dotProduct >= 0) continue; //If intercept is coming from behind the triangle, ignore
@@ -108,16 +108,26 @@ public class Collision
     {
         ArrayList<Integer> levelMeshIndices = scene.getLevelMeshIndices();
         ArrayList<Mesh> levelMeshes = scene.getAllMeshes();
+        ArrayList<CollisionTriangle> collisionBuffer = new ArrayList<>();
+        float moveLength = new Vector3f(trajectory).sub(object.position).length();
         for(Integer idx : levelMeshIndices)
         {
-            ArrayList<CollisionTriangle> triangles = levelMeshes.get(idx).colTriangles;
-            boolean hittingTris = true;
-            while(hittingTris)
+            CollisionMesh collision = levelMeshes.get(idx).collision;
+            if(collision == null) continue; //If no collision, skip this mesh
+            for(CollisionNode node : collision.nodes)
             {
-                Vector3f newTrajectory = Collision.testTriangles(triangles, object.position, trajectory, object.getInteractionRadius());
-                if(newTrajectory != null) //Func returns null pt when no triangle core.collision
-                    trajectory = newTrajectory;
-                else hittingTris = false;
+                if(!node.isObjectInNode(object, moveLength)) continue; //if not in node, skip this node
+                ArrayList<CollisionTriangle> triangles = node.triangles;
+                boolean hittingTris = true;
+                while(hittingTris)
+                {
+                    Vector3f newTrajectory = Collision.testTriangles(triangles, object.position, trajectory, object.getInteractionRadius());
+                    if(newTrajectory != null)
+                    {
+                        trajectory = newTrajectory;
+                    }
+                    else hittingTris = false;
+                }
             }
         }
         //TODO: Object collision
@@ -129,7 +139,7 @@ public class Collision
             float sceneObjectRadius = sceneObject.getInteractionRadius();
             if(Collision.spheresCollide(object.position, sceneObject.position, objectRadius, sceneObjectRadius))
             {
-                System.out.println("You touched the object");
+                //System.out.println("You touched the object");
                 object.setNewPosition(trajectory);
                 return sceneObject;
             }

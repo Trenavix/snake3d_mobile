@@ -34,6 +34,9 @@ public class Sparkles
             mesh.drawOnTopOfAllGeometry = true;
             mesh.setEnvColor(new Vector4f(1.0f,1.0f,1.0f, 1.0f));
             object.getSubObjects().add(new LightObject(object.position, new Vector3f(), 0.5f, 0.1f, 0.5f, 0, 0));
+            LightObject light = (LightObject)object.getSubObjects().getFirst();
+            //light.setAmbientColor(new Vector3f(-0.2f, -1.2f, -1.9f));
+            //light.setDiffuseColor(new Vector3f(0.2f, -0.6f, -1.25f));
             object.getSubObjects().add(new GameObject(object.getMeshReference(), new Vector3f(), new Vector3f(), 1.0f, object.getInteractionRadius(), meshCount));
             object.getSubObjects().getLast().position.z = 0.1f;
             object.getSubObjects().add(new GameObject(object.getMeshReference(), new Vector3f(), new Vector3f(), 1.0f, object.getInteractionRadius(), meshCount));

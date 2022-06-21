@@ -38,6 +38,7 @@ public class Texture
             }
         }
         this.rawData = texDataBytes;
+        this.wrapMode = new TextureWrapMode((byte)0);
     }
     public Texture(int width, int height, byte[] data, byte wrapMode)
     {
@@ -108,6 +109,7 @@ public class Texture
         GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, textureIDs[ID]);
         GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MIN_FILTER, GLES30.GL_LINEAR);
         GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MAG_FILTER, GLES30.GL_LINEAR);
+        byte[] white = new byte[]{(byte)0xFF, (byte)0xFF, (byte)0xFF, (byte)0xFF};
         GLES30.glTexImage2D
                 (
                         GLES30.GL_TEXTURE_2D,

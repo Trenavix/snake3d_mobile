@@ -21,9 +21,11 @@ public class Shader
     public static int vertUVHandle;
     public static int vertColorHandle;
     public static int vertNormalHandle;
+    public static int vertWeightHandle;
     public static int GL_worldMatrixLocation; //GL Matrix locations
     public static int GL_viewMatrixLocation;
     public static int GL_projMatrixLocation;
+    public static int GL_weightMatrixLocation;
     public static int GL_texUniLocation;
     public static int GL_specularIntensityUniLocation;
     public static int GL_ambientColorUniLocation;
@@ -68,6 +70,7 @@ public class Shader
         vertUVHandle = GLES30.glGetAttribLocation(program, "vertUV");
         vertColorHandle = GLES30.glGetAttribLocation(program, "vertColor");
         vertNormalHandle = GLES30.glGetAttribLocation(program, "vertNormal");
+        vertWeightHandle = GLES30.glGetAttribLocation(program, "vertWeight");
         GLES30.glUseProgram(program);
     }
 
@@ -78,10 +81,12 @@ public class Shader
         GLES30.glEnableVertexAttribArray(Shader.vertUVHandle);
         GLES30.glEnableVertexAttribArray(Shader.vertColorHandle);
         GLES30.glEnableVertexAttribArray(Shader.vertNormalHandle);
+        GLES30.glEnableVertexAttribArray(Shader.vertWeightHandle);
         int program = Shader.program;
         GL_worldMatrixLocation = GLES30.glGetUniformLocation(program, "mWorld");
         GL_viewMatrixLocation = GLES30.glGetUniformLocation(program, "mView");
         GL_projMatrixLocation = GLES30.glGetUniformLocation(program, "mProj");
+        GL_weightMatrixLocation = GLES30.glGetUniformLocation(program, "mWeighted");
         GL_texUniLocation = GLES30.glGetUniformLocation(program, "u_Texture");
         GL_ambientColorUniLocation = GLES30.glGetUniformLocation(program, "u_Light.ambientColor");
         GL_diffuseColorUniLocation = GLES30.glGetUniformLocation(program, "u_Light.diffuseColor");

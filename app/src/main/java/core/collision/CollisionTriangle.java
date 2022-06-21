@@ -1,21 +1,22 @@
 package core.collision;
 import org.joml.Vector3f;
 
+import java.util.ArrayList;
+
 import functions.OtherConstants;
 
 public class CollisionTriangle
 {
-    private int[] vertexIndices; //Indices to vertices
     private Vector3f[] vertices;
     private Vector3f[] originTri;
     private int type;
     private Vector3f centroidPos;
     private Vector3f surfaceNormal;
     private float maxRadius;
+    private Vector3f[] AABB;
     public CollisionTriangle(int[] vertexIndices, int type, float[] meshVertices)
     {
         if(vertexIndices.length != 3) resizeVertexArrayTo3(vertexIndices);
-        this.vertexIndices = vertexIndices; //fixed size 3
         this.type = type;
         this.vertices = new Vector3f[3];
         this.originTri = new Vector3f[3];
@@ -28,21 +29,21 @@ public class CollisionTriangle
         this.centroidPos = calculateCentroid(vertices);
         for(int i=0; i<3; i++) originTri[i] = new Vector3f(vertices[i]).sub(centroidPos);
         this.maxRadius = calculateLargestRadius();
+        this.AABB = calculateBoundingBox();
     }
     public CollisionTriangle(int idx1, int idx2, int idx3, int type, float[] meshVertices)
     {
-        this.vertexIndices = new int[]{idx1, idx2, idx3}; //fixed size 3
         this.type = type;
         this.vertices = new Vector3f[3];
         for(int i=0; i<3; i++)
             vertices[i] = new Vector3f(
-                    meshVertices[vertexIndices[i]], //x coord
-                    meshVertices[vertexIndices[i]+1], //y coord
-                    meshVertices[vertexIndices[i]+2]); //z coord
+                    meshVertices[idx1], //x coord
+                    meshVertices[idx2], //y coord
+                    meshVertices[idx3]); //z coord
+        this.AABB = calculateBoundingBox();
     }
     public CollisionTriangle(short type, Vector3f vertex1, Vector3f vertex2, Vector3f vertex3)
     {
-        this.vertexIndices = null;
         this.type = type;
         this.vertices = new Vector3f[]{vertex1, vertex2, vertex3};
         this.surfaceNormal = calculateNormal(vertices[0], vertices[1], vertices[2]);
@@ -50,6 +51,7 @@ public class CollisionTriangle
         this.originTri = new Vector3f[3];
         for(int i=0; i<3; i++) originTri[i] = new Vector3f(vertices[i]).sub(centroidPos);
         this.maxRadius = calculateLargestRadius();
+        this.AABB = calculateBoundingBox();
     }
 
     private float calculateLargestRadius()
@@ -61,7 +63,15 @@ public class CollisionTriangle
         return radius;
     }
 
-    public Vector3f[] getVerticesAsVectors()
+    public Vector3f[] getVertices()
+    {
+        return this.vertices;
+    }
+    public Vector3f[] getAABB()
+    {
+        return this.AABB;
+    }
+    public Vector3f[] getVerticesAsVectorCopies()
     {
         Vector3f[] newVerts = new Vector3f[vertices.length];
         for(int i=0; i<vertices.length; i++)
@@ -102,6 +112,23 @@ public class CollisionTriangle
     }
     Vector3f getCentroidPos(){return new Vector3f(this.centroidPos); }
     float getMaxRadius() {return this.maxRadius; }
+
+    private Vector3f[] calculateBoundingBox()
+    {
+        Vector3f placeholderVertex = this.vertices[0];
+        Vector3f min = new Vector3f(placeholderVertex);
+        Vector3f max = new Vector3f(placeholderVertex);
+        for(Vector3f vertex : this.vertices)
+        {
+            if(vertex.x < min.x) min.x = vertex.x;
+            else if(vertex.x > max.x) max.x = vertex.x;
+            if(vertex.y < min.y) min.y = vertex.y;
+            else if(vertex.y > max.y) max.y = vertex.y;
+            if(vertex.z < min.z) min.z = vertex.z;
+            else if(vertex.z > max.z) max.z = vertex.z;
+        }
+        return new Vector3f[]{min, max};
+    }
 
     public Vector3f closestPoint(Vector3f p)
     {

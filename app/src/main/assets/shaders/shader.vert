@@ -3,15 +3,16 @@ attribute vec3 vertPos;
 attribute vec2 vertUV;
 attribute vec4 vertColor;
 attribute vec3 vertNormal;
+attribute lowp float vertWeight;
 varying vec4 vertFragColor;
 varying vec2 fragUV;
 varying lowp vec3 fragNormal;
 varying lowp vec3 fragPosition;
-/*varying lowp vec3 u_LightPositions[MAX_POINT_LIGHTS];*/
 varying vec2 vN;
 uniform mat4 mWorld;
 uniform mat4 mView;
 uniform mat4 mProj;
+uniform mat4 mWeighted; /*Utilies vtx weight, i.e. for bones*/
 uniform bool sphereMapping;
 uniform lowp float u_TexScrollS;
 uniform lowp float u_TexScrollT;
@@ -20,6 +21,23 @@ uniform bool u_Billboard;
 uniform vec3 u_Billboard_Position;
 uniform vec2 u_Billboard_Scale;
 uniform mediump float u_Billboard_Rotation;
+
+mat4 weightedMtx()
+{
+    mat4 newMtx = mWeighted;
+    for(int i =0; i<3; i++)
+    {
+        newMtx[i][i] = 1.0+((mWeighted[i][i] - 1.0)*vertWeight); /*Scales/Rotations*/
+        newMtx[3][i] = mWeighted[3][i]*vertWeight; /*Raw coordinates*/
+    }
+    return newMtx;
+}
+vec4 weightedPos(vec3 pos)
+{
+    if(vertWeight == 0.0) return vec4(pos, 1.0);
+    return weightedMtx()*vec4(pos, 1.0);;
+}
+
 void main()
 {
     vertFragColor = vertColor;
@@ -60,12 +78,19 @@ void main()
         (CameraRight_worldspace * new_x * u_Billboard_Scale.x) +
         (CameraUp_worldspace * new_y * u_Billboard_Scale.y);
         fragPosition = (mWorld * vec4(vertexPosition_worldspace, 1.0)).xyz;
-        gl_Position = mProj * mView * mWorld * vec4(vertexPosition_worldspace, 1.0);
+        gl_Position =
+            mProj *
+            mView *
+            mWorld *
+            weightedPos(vertexPosition_worldspace);
     }
     else
     {
         fragPosition = (mWorld * vec4(vertPos, 1.0)).xyz;
-        gl_Position = mProj * mView * mWorld * vec4(vertPos, 1.0);
+        gl_Position =
+            mProj *
+            mView *
+            mWorld *
+            weightedPos(vertPos);
     }
-
 }

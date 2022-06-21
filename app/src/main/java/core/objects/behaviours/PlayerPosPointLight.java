@@ -16,10 +16,10 @@ public class PlayerPosPointLight
         if(object.status == Status.STARTUP)
         {
             LightObject light = new LightObject(playerPos, new Vector3f(), 0.7f, 0.5f, 0.5f, 0, 0);
-            light.setAmbientColor(new Vector3f(0.10f, 0.15f, 0.45f));
-            light.setDiffuseColor(new Vector3f(0.2f, 0.4f, 1.0f));
+            light.setAmbientColor(new Vector3f(0.20f, -0.15f, -0.45f));
+            light.setDiffuseColor(new Vector3f(0.5f, -0.4f, -1.0f));
             object.getSubObjects().add(light);
-            Shader.currentLightCount++; //IMPORTANT: On light initiation you need to add, the count methods won't detect
+            //Shader.currentLightCount++; //IMPORTANT: On light initiation you need to add, the count methods won't detect
         }
         object.getSubObjects().getFirst().position = playerPos;
     }

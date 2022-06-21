@@ -127,7 +127,8 @@ public class OBJ2Mesh
         {
             returnIndices[i] = ArrayUtils.toPrimitive(newIndices[i].toArray(new Integer[0]), 0);
         }
-        return new Mesh(newVertsAsFloat, returnIndices,textures, OtherConstants.polygonType_TRIANGLE, null, interactionRadius);
+        //return new Mesh(newVertsAsFloat, returnIndices,textures, OtherConstants.polygonType_TRIANGLE, null, interactionRadius);
+        return null; //Not updating support
     }
 
     public static String[] objGetTexturePaths(String[] mtl, String[] objTexNames)

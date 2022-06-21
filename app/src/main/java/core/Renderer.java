@@ -65,7 +65,7 @@ public class Renderer implements GLSurfaceView.Renderer
         GLES30.glDepthFunc( GLES30.GL_LEQUAL );
         GLES30.glEnable(GLES30.GL_BLEND);
         GLES30.glBlendFunc(GLES30.GL_SRC_ALPHA, GLES30.GL_ONE_MINUS_SRC_ALPHA);
-        GLES30.glLineWidth(3.5f); //for any wireframe models
+        GLES30.glLineWidth(7.0f); //for any wireframe models
     }
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
@@ -79,6 +79,7 @@ public class Renderer implements GLSurfaceView.Renderer
         float aspectRatio = (float) width / height;
         Utilities.perspectiveFrustrum(projMatrix, 45, aspectRatio, 0.3f, 200.0f);
         GLES30.glUniformMatrix4fv(Shader.GL_worldMatrixLocation, 1, false, floatArrayToBuffer(worldMatrix, true));
+        GLES30.glUniformMatrix4fv(Shader.GL_weightMatrixLocation, 1, false, floatArrayToBuffer(worldMatrix, true));
         GLES30.glUniformMatrix4fv(Shader.GL_projMatrixLocation, 1, false, floatArrayToBuffer(projMatrix, true));
     }
 
@@ -108,6 +109,7 @@ public class Renderer implements GLSurfaceView.Renderer
         GLES30.glUniformMatrix4fv(Shader.GL_viewMatrixLocation, 1, false, floatArrayToBuffer(viewMatrix, true));
         Matrix.setIdentityM(worldMatrix, 0);
         GLES30.glUniformMatrix4fv(Shader.GL_worldMatrixLocation, 1, false, floatArrayToBuffer(worldMatrix, true));
+        GLES30.glUniformMatrix4fv(Shader.GL_weightMatrixLocation, 1, false, floatArrayToBuffer(worldMatrix, true));
         GLES30.glUniform1i(Shader.GL_texUniLocation, 0);
         GLES30.glUniform3f(Shader.GL_ambientColorUniLocation, 1.0f, 1.0f, 1.0f);
         Shader.lightDirection.normalize();

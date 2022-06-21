@@ -15,8 +15,8 @@ public class Material
     int collisionType; //Possibly a placeholder until CollisionMesh class
     String name;
     ArrayList<Texture> textures;
-    Vector3f ambientColor = new Vector3f(0.12f,0.05f, 0.05f);
-    Vector3f diffuseColor = new Vector3f(0.18f,0.18f, 0.18f);
+    Vector3f ambientColor = new Vector3f(0.5f,0.5f, 0.5f);
+    Vector3f diffuseColor = new Vector3f(0.5f,0.5f, 0.5f);
     float specularIntensity = 0.0f;
     float shininess = 0.0f;
     private boolean sphereMap = false;

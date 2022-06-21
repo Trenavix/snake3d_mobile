@@ -13,6 +13,7 @@ import org.joml.Vector3f;
 import org.joml.Vector4f;
 
 import core.Renderer;
+import core.collision.CollisionMesh;
 import core.collision.CollisionTriangle;
 import functions.OtherConstants;
 
@@ -20,13 +21,12 @@ public class Mesh
 {
     public int polygonType; //See OtherConstants for types (ie TRIANGLE)
     private final float[] vertices;
-    private final int[][] splitIndices; //2D array; Column: texture, Row: Indices
     private final int[] masterIndices;
     private final int[] masterIndexOffsets;
     private final int[] indicesPerMaterial;
     private  Material[] materials;
     private final int[] textureIDs;
-    public ArrayList<CollisionTriangle> colTriangles = new ArrayList<CollisionTriangle>();
+    public CollisionMesh collision;
     private Vector3f translation = new Vector3f(0.f, 0.f, 0.f);
     private Vector3f scale = new Vector3f(1.f, 1.f, 1.f);
     public Vector3f rotation = new Vector3f(0.f, 0.f, 0.f);
@@ -36,24 +36,21 @@ public class Mesh
     public boolean billboard = false;
     public boolean depthBufferWritingEnabled = true;
     public boolean drawOnTopOfAllGeometry = false;
+    float[] transformMtx = new float[16];
 
-    public Mesh(float[] vertices, int[][] indices, Material[] materials, int polygonType, int[][] collisionIndices, float interactionRadius)
+    public Mesh(float[] vertices, int[] indices, Material[] materials, int[] materialIndexOffsets, int polygonType, ArrayList<CollisionTriangle> colTris, int octreeLevel)
     {
         this.vertices = vertices;
-        this.splitIndices = indices;
+        this.masterIndices = indices;
         this.materials = materials;
         this.polygonType = polygonType;
-        this.interactionRadius = interactionRadius;
-        textureIDs = new int[materials.length];
-        masterIndexOffsets = new int[splitIndices.length];
-        int buf = 0;
-        for(int i=0; i<splitIndices.length; i++)
+        this.masterIndexOffsets = materialIndexOffsets;
+        this.interactionRadius = 0.0f;
+        this.textureIDs = new int[materials.length];
+        if(colTris != null && colTris.size() >1)
         {
-            int subLength = splitIndices[i].length;
-            masterIndexOffsets[i] = buf;
-            buf +=  subLength;//get entire length
+            this.collision = new CollisionMesh(colTris, octreeLevel);
         }
-        masterIndices = new int[buf];
         this.indicesPerMaterial = new int[masterIndexOffsets.length];
         for(int i=0; i<indicesPerMaterial.length; i++)
         {
@@ -61,33 +58,7 @@ public class Mesh
                 indicesPerMaterial[i] = (getMasterIndices().length - masterIndexOffsets[i]);
             else indicesPerMaterial[i] = (masterIndexOffsets[i+1] - masterIndexOffsets[i]);
         }
-        buf = 0;
-        for(int i=0; i<splitIndices.length; i++) //combine 2d array axes into one
-        {
-            for(int j=0; j < splitIndices[i].length;j++)
-            {
-                masterIndices[buf] = splitIndices[i][j];
-                buf++;
-            }
-            if(collisionIndices == null && materials[i].collisionType != 0) //skip type 0
-                for(int j=0; j<splitIndices[i].length; j+=3)
-                {
-                    int[] colIndices = {splitIndices[i][j], splitIndices[i][j+1], splitIndices[i][j+2]};
-                    CollisionTriangle newColTri = new CollisionTriangle(colIndices, materials[i].collisionType, vertices);
-                    colTriangles.add(newColTri);
-                }
-        }
-        if(collisionIndices != null)
-            for(int i=0; i<collisionIndices.length; i++)
-                for(int j=0;j<collisionIndices[i].length; j+=3) //3 per tri
-                    colTriangles.add(
-                        new CollisionTriangle(
-                            collisionIndices[i][j],
-                            collisionIndices[i][j+1],
-                            collisionIndices[i][j+2],
-                            i, vertices));
     }
-
     public Mesh(float[] vertices, int[] indices, Material[] materials, int[] materialIndexOffsets, int polygonType)
     {
         this.vertices = vertices;
@@ -97,7 +68,7 @@ public class Mesh
         this.masterIndexOffsets = materialIndexOffsets;
         this.interactionRadius = 0.0f;
         this.textureIDs = new int[materials.length];
-        this.splitIndices = null; //die
+        this.collision = null;
         this.indicesPerMaterial = new int[masterIndexOffsets.length];
         for(int i=0; i<indicesPerMaterial.length; i++)
         {
@@ -116,13 +87,7 @@ public class Mesh
         this.masterIndexOffsets = materialIndexOffsets;
         this.interactionRadius = 0.0f;
         this.textureIDs = textureIDs;
-        this.splitIndices = null; //die
         this.indicesPerMaterial = indicesPerMaterial;
-    }
-
-    private void splitToMasterIndices()
-    {
-
     }
 
     public void translate(Vector3f translateVector)
@@ -148,10 +113,6 @@ public class Mesh
         return Arrays.copyOf(vertices, vertices.length);
     }
     public float[] getVerticesDirect() {return vertices;}
-    public int[][] getSplitIndices()
-    {
-        return Arrays.copyOf(splitIndices, splitIndices.length);
-    }
     public int[] getMasterIndices()
     {
         return Arrays.copyOf(masterIndices, masterIndices.length);
@@ -181,21 +142,25 @@ public class Mesh
 
     public void setMeshMatrix()
     {
+        //First, push the provisional matrix to world matrix (parent node/mesh matrix)
+        GLES30.glUniformMatrix4fv(Shader.GL_worldMatrixLocation, 1, false, floatArrayToBuffer(Renderer.worldMatrix, true));
+        Matrix.setIdentityM(transformMtx, 0);
         if(billboard)
         {
+            //TODO: Make this a provisional matrix push when weights are implemented
             GLES30.glUniform1i(Shader.GL_billboardUniLocation, GLES30.GL_TRUE);
             GLES30.glUniform2f(Shader.GL_billboardScaleUniLocation, scale.x, scale.y);
             GLES30.glUniform3f(Shader.GL_billboardPosUniLocation, translation.x, translation.y, translation.z);
             GLES30.glUniform1f(Shader.GL_billboardRotationUniLocation, this.rotation.x);
             GLES30.glUniformMatrix4fv(Shader.GL_worldMatrixLocation, 1, false, floatArrayToBuffer(Renderer.worldMatrix, true));
-
             return;
         }
         GLES30.glUniform1i(Shader.GL_billboardUniLocation, GLES30.GL_FALSE);
-        Matrix.translateM(Renderer.worldMatrix, 0, translation.x, translation.y, translation.z);
-        Matrix.scaleM(Renderer.worldMatrix, 0, scale.x, scale.y, scale.z);
-        Utilities.rotateMatrix3Axes(Renderer.worldMatrix, rotation);
-        GLES30.glUniformMatrix4fv(Shader.GL_worldMatrixLocation, 1, false, floatArrayToBuffer(Renderer.worldMatrix, true));
+        Matrix.translateM(transformMtx, 0, translation.x, translation.y, translation.z);
+        Utilities.rotateMatrix3Axes(transformMtx, rotation);
+        Matrix.scaleM(transformMtx, 0, scale.x, scale.y, scale.z);
+        //Now pass the transformMtx to GL Shader:
+        GLES30.glUniformMatrix4fv(Shader.GL_weightMatrixLocation, 1, false, floatArrayToBuffer(transformMtx, true));
     }
 
     public void setEnvColor(Vector4f newColor) { this.envColor = newColor; }
@@ -232,5 +197,10 @@ public class Mesh
                 polygonType,
                 this.textureIDs,
                 this.indicesPerMaterial);
+    }
+
+    private void provisionalMtxPush()
+    {
+
     }
 }

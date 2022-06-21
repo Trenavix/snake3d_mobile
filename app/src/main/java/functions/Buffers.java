@@ -4,6 +4,7 @@ import static functions.OtherConstants.bytesInFloat;
 import static functions.OtherConstants.vertColorOffset;
 import static functions.OtherConstants.vertUVOffset;
 import static functions.OtherConstants.vertNormalOffset;
+import static functions.OtherConstants.vertWeightOffset;
 import static functions.OtherConstants.vertexElements;
 
 import android.opengl.GLES30;
@@ -58,6 +59,7 @@ public class Buffers
         GLES30.glVertexAttribPointer(Shader.vertUVHandle, 2, GLES30.GL_FLOAT, false, vertexElements*bytesInFloat, vertUVOffset *bytesInFloat);
         GLES30.glVertexAttribPointer(Shader.vertColorHandle, 4, GLES30.GL_FLOAT, false, vertexElements*bytesInFloat, vertColorOffset*bytesInFloat);
         GLES30.glVertexAttribPointer(Shader.vertNormalHandle, 3, GLES30.GL_FLOAT, false, vertexElements*bytesInFloat, vertNormalOffset*bytesInFloat);
+        GLES30.glVertexAttribPointer(Shader.vertWeightHandle, 1, GLES30.GL_FLOAT, false, vertexElements*bytesInFloat, vertWeightOffset*bytesInFloat);
     }
 
     public static DoubleObject combineAllMeshBuffers(ArrayList<Mesh> meshes)

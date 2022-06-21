@@ -23,11 +23,11 @@ public class Mesh32Commands
     //1st bit: S clamp, 2nd bit: T clamp, 3rd bit: R clamp
     //4th bit: S mirror, 5th bit: T mirror, 6th bit: R mirror
     public static final byte CMD_TextureWrap = 8;
-    public static final byte CMD_Mat_AmbientColor = 9;
-    public static final byte CMD_Mat_DiffuseColor = 0x0A;
+    public static final byte CMD_Mat_AmbientColor = 9; //Followed by 3 bytes: RR GG BB
+    public static final byte CMD_Mat_DiffuseColor = 0x0A; //Followed by 3 bytes: RR GG BB
     public static final byte CMD_Mat_SpecularColor = 0x0B;
     public static final byte CMD_Mat_Shininess = 0x0C; //Shine factor for specular
-    public static final byte CMD_Mat_CullFace = 0x0D; //Cull polygons containing this material: 0 backface, 1 no cull, 2 frontface
+    public static final byte CMD_Mat_CullFace = 0x0D; //Cull polygons containing this material: 0 back-face, 1 no cull, 2 front-face
     public static final byte CMD_TextureMapping = 0x0E; //Enable env mapping or automatic UV generation (0 none, 1 env, 2 static)
     public static final byte CMD_Tex_ScrollS = 0x0F; //Scroll factor setting on S axis, default is 0
     public static final byte CMD_Tex_ScrollT = 0x10; //Scroll factor setting on T axis, default is 0

@@ -7,6 +7,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 
+import core.collision.CollisionMesh;
 import core.collision.CollisionTriangle;
 import functions.OtherConstants;
 import graphics.Material;
@@ -16,10 +17,10 @@ import graphics.Texture;
 public class Mesh32ToMesh
 {
     private static final byte stepParamByteCount = 4;
-    private static int vertexAttribCount = 12;//12 by default
-    private static int vertexByteCount = 48;//12 by default
+    private static int vertexAttribCount = OtherConstants.vertexElements;//13 by default
+    private static int vertexByteCount = vertexAttribCount*OtherConstants.bytesInFloat;
     private static int verticesPerPolygon = 3;//3 by default
-    private static int indexBytesPerPolygon = 12;//3 by default
+    private static int indexBytesPerPolygon = verticesPerPolygon*OtherConstants.bytesInFloat;
     private static int bytesPerPixel = 4;//4 by default (RGBA32)
 
     public static Mesh Mesh32ToMesh(byte[] mesh32, float scale)
@@ -62,6 +63,11 @@ public class Mesh32ToMesh
                             if( k < OtherConstants.vertUVOffset)
                                 f *= scale;
                             vertexData.add(f); //Add every individual float/attribute
+                        }
+                        if(vertexAttribCount < OtherConstants.vertexElements)
+                        {
+                            for (int k=0; k < (OtherConstants.vertexElements - vertexAttribCount); k++)
+                                vertexData.add(0.0f); //Padding for missing attributes i.e. weights
                         }
                     }
                     break;
@@ -164,8 +170,7 @@ public class Mesh32ToMesh
                     int[] indexArray = ArrayUtils.toPrimitive(indices.toArray(new Integer[0]), 0);
                     Material[] matArray = materials.toArray(new Material[0]);
                     int[] offsetArray = ArrayUtils.toPrimitive(materialIndexOffsets.toArray(new Integer[0]), 0);
-                    Mesh newMesh = new Mesh(vertArray, indexArray, matArray, offsetArray, 0);
-                    newMesh.colTriangles = collisionTris;
+                    Mesh newMesh = new Mesh(vertArray, indexArray, matArray, offsetArray, 0, collisionTris, 2);
                     return newMesh;
             }
         }
