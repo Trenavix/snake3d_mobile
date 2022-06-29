@@ -82,14 +82,72 @@ public class SampleVertices
             22, 20, 23
     };
 
-    public VertexIndexBatch getBoxBatch()
+    public static float[] flagVertices =
+    {
+            // X, Y, Z              U, V        R, G, B, A                 Normals                Weight
+            // First square
+            1.0f, 1.0f, 1.0f,    1.f, 1.f,     1.0f, 1.0f, 1.0f, 1.0f,     0.0f, 0.0f, 1.0f,      0.05f,
+            1.0f, -1.0f, 1.0f,   1.f, 0.f,     0.5f, 0.5f, 0.5f, 1.0f,     0.0f, 0.0f, 1.0f,      0.05f,
+            -0.0f, -1.0f, 1.0f,  0.f, 0.f,     0.5f, 0.5f, 0.5f, 1.0f,     0.0f, 0.0f, 1.0f,      0.0f,
+            -0.0f, 1.0f, 1.0f,   0.f, 1.f,     1.0f, 1.0f, 1.0f, 1.0f,     0.0f, 0.0f, 1.0f,      0.0f,
+
+            // Second square
+            2.0f, 1.0f, 1.0f,    1.f, 1.f,     1.0f, 1.0f, 1.0f, 1.0f,     0.0f, 0.0f, 1.0f,      0.1f,
+            2.0f, -1.0f, 1.0f,   1.f, 0.f,     0.5f, 0.5f, 0.5f, 1.0f,     0.0f, 0.0f, 1.0f,      0.1f,
+            1.0f, -1.0f, 1.0f,  0.f, 0.f,      0.5f, 0.5f, 0.5f, 1.0f,     0.0f, 0.0f, 1.0f,      0.05f,
+            1.0f, 1.0f, 1.0f,   0.f, 1.f,      1.0f, 1.0f, 1.0f, 1.0f,     0.0f, 0.0f, 1.0f,      0.05f,
+
+            // Third square
+            3.0f, 1.0f, 1.0f,    1.f, 1.f,     1.0f, 1.0f, 1.0f, 1.0f,     0.0f, 0.0f, 1.0f,      0.2f,
+            3.0f, -1.0f, 1.0f,   1.f, 0.f,     0.5f, 0.5f, 0.5f, 1.0f,     0.0f, 0.0f, 1.0f,      0.2f,
+            2.0f, -1.0f, 1.0f,  0.f, 0.f,      0.5f, 0.5f, 0.5f, 1.0f,     0.0f, 0.0f, 1.0f,      0.1f,
+            2.0f, 1.0f, 1.0f,   0.f, 1.f,      1.0f, 1.0f, 1.0f, 1.0f,     0.0f, 0.0f, 1.0f,      0.1f,
+
+            // Fourth square
+            4.0f, 1.0f, 1.0f,    1.f, 1.f,     1.0f, 1.0f, 1.0f, 1.0f,     0.0f, 0.0f, 1.0f,      0.4f,
+            4.0f, -1.0f, 1.0f,   1.f, 0.f,     0.5f, 0.5f, 0.5f, 1.0f,     0.0f, 0.0f, 1.0f,      0.4f,
+            3.0f, -1.0f, 1.0f,  0.f, 0.f,      0.5f, 0.5f, 0.5f, 1.0f,     0.0f, 0.0f, 1.0f,      0.2f,
+            3.0f, 1.0f, 1.0f,   0.f, 1.f,      1.0f, 1.0f, 1.0f, 1.0f,     0.0f, 0.0f, 1.0f,      0.2f,
+
+            // Fifth square
+            5.0f, 1.0f, 1.0f,    1.f, 1.f,     1.0f, 1.0f, 1.0f, 1.0f,     0.0f, 0.0f, 1.0f,      0.8f,
+            5.0f, -1.0f, 1.0f,   1.f, 0.f,     0.5f, 0.5f, 0.5f, 1.0f,     0.0f, 0.0f, 1.0f,      0.8f,
+            4.0f, -1.0f, 1.0f,  0.f, 0.f,      0.5f, 0.5f, 0.5f, 1.0f,     0.0f, 0.0f, 1.0f,      0.4f,
+            4.0f, 1.0f, 1.0f,   0.f, 1.f,      1.0f, 1.0f, 1.0f, 1.0f,     0.0f, 0.0f, 1.0f,      0.4f,
+    };
+
+    public static final int[] flagIndices =
+            {
+                    // First
+                    0, 1, 2,
+                    0, 2, 3,
+
+                    // Second
+                    5, 4, 6,
+                    6, 4, 7,
+
+                    // Third
+                    8, 9, 10,
+                    8, 10, 11,
+
+                    // Fourth
+                    13, 12, 14,
+                    15, 14, 12,
+
+                    // Fifth
+                    16, 17, 18,
+                    16, 18, 19,
+            };
+
+    public static VertexIndexBatch getBoxBatch()
     {
         return new VertexIndexBatch(boxVertices, boxIndices);
     }
-    public VertexIndexBatch getTriBatch()
+    public static VertexIndexBatch getTriBatch()
     {
         return new VertexIndexBatch(triVertices, triIndices);
     }
+    public static VertexIndexBatch getFlagBatch() { return new VertexIndexBatch(flagVertices, flagIndices); }
     public static VertexIndexBatch generateGridPoints(float width, float height, short partitions_x, short partitions_y, float position_y)
     {
         float partitionwidth = width / partitions_x;

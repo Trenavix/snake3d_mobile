@@ -5,6 +5,7 @@ import static functions.OtherConstants.vertColorOffset;
 import static functions.OtherConstants.vertUVOffset;
 import static functions.OtherConstants.vertNormalOffset;
 import static functions.OtherConstants.vertWeightOffset;
+import static functions.OtherConstants.vertBoneOffset;
 import static functions.OtherConstants.vertexElements;
 
 import android.opengl.GLES30;
@@ -17,6 +18,7 @@ import java.nio.ShortBuffer;
 import java.util.ArrayList;
 
 import graphics.Mesh;
+import graphics.Model;
 import graphics.Shader;
 
 public class Buffers
@@ -60,26 +62,30 @@ public class Buffers
         GLES30.glVertexAttribPointer(Shader.vertColorHandle, 4, GLES30.GL_FLOAT, false, vertexElements*bytesInFloat, vertColorOffset*bytesInFloat);
         GLES30.glVertexAttribPointer(Shader.vertNormalHandle, 3, GLES30.GL_FLOAT, false, vertexElements*bytesInFloat, vertNormalOffset*bytesInFloat);
         GLES30.glVertexAttribPointer(Shader.vertWeightHandle, 1, GLES30.GL_FLOAT, false, vertexElements*bytesInFloat, vertWeightOffset*bytesInFloat);
+        GLES30.glVertexAttribPointer(Shader.vertBoneHandle, 1, GLES30.GL_FLOAT, false, vertexElements*bytesInFloat, vertBoneOffset*bytesInFloat);
     }
 
-    public static DoubleObject combineAllMeshBuffers(ArrayList<Mesh> meshes)
+    public static DoubleObject combineAllMeshBuffers(ArrayList<Model> models)
     {
         ArrayList<Float> allVertices = new ArrayList<Float>();
         ArrayList<Integer> allIndices = new ArrayList<Integer>();
         int currentOffset = 0;
         int currentIdxOffset = 0;
-        for(Mesh mesh : meshes)
+        for(Model model : models)
         {
             currentOffset = allVertices.size();
-            currentIdxOffset = allIndices.size();
-            float[] meshVerts = mesh.getVerticesDirect();
-            int[] meshIndices = mesh.getMasterIndicesDirect();
-            for(float data: meshVerts)
+            float[] modelVerts = model.getVerticesDirect();
+            for(float data: modelVerts)
                 allVertices.add(data); //Collect every vertex attribute and store
-            mesh.addOffsetToIndices(currentOffset/ vertexElements);
-            for(int index: meshIndices)
-                allIndices.add(index);
-            mesh.addToIndexOffsets(currentIdxOffset);
+            for(Mesh mesh : model.meshes)
+            {
+                currentIdxOffset = allIndices.size();
+                int[] meshIndices = mesh.getMasterIndicesDirect();
+                mesh.addOffsetToIndices(currentOffset/ vertexElements);
+                for(int index: meshIndices)
+                    allIndices.add(index);
+                mesh.addToIndexOffsets(currentIdxOffset);
+            }
         }
         float[] masterVertexBuffer = new float[allVertices.size()];
         int[] masterIndexBuffer = new int[allIndices.size()];

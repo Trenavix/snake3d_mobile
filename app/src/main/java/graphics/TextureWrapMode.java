@@ -31,6 +31,5 @@ public class TextureWrapMode
         //sixth bit R mirror
         if (((wrapMode >> 5) & 1) == 1) this.mirrorR = true;
         else this.mirrorR = false;
-
     }
 }

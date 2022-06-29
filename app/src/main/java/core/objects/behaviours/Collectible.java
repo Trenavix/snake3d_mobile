@@ -28,7 +28,7 @@ public class Collectible
                 player.setPathSize(player.getPathSize()+1);
                 object.swapObject(
                         new BehavObject(
-                                currentScene.getMesh(4), //TODO: Dedicated scene mesh indices (4 is sparkle)
+                                currentScene.getModel(4), //TODO: Dedicated scene mesh indices (4 is sparkle)
                                 new Vector3f(object.position),
                                 new Vector3f(),
                                 0.4f,

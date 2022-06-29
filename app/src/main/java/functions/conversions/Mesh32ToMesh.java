@@ -6,12 +6,14 @@ import org.joml.Vector3f;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
+import java.util.Arrays;
 
-import core.collision.CollisionMesh;
 import core.collision.CollisionTriangle;
 import functions.OtherConstants;
+import graphics.BoneNode;
 import graphics.Material;
 import graphics.Mesh;
+import graphics.Model;
 import graphics.Texture;
 
 public class Mesh32ToMesh
@@ -22,17 +24,18 @@ public class Mesh32ToMesh
     private static int verticesPerPolygon = 3;//3 by default
     private static int indexBytesPerPolygon = verticesPerPolygon*OtherConstants.bytesInFloat;
     private static int bytesPerPixel = 4;//4 by default (RGBA32)
-
-    public static Mesh Mesh32ToMesh(byte[] mesh32, float scale)
+    private static BoneNode currentBone;
+    private static BoneNode[] allBones;
+    private static int boneIDIncrement;
+    public static Model Mesh32ToModel(byte[] mesh32, float scale)
     {
+        boneIDIncrement = 0;
         ArrayList<Float> vertexData = new ArrayList<>();
         ArrayList<Material> materials = new ArrayList<>();
         ArrayList<Integer> indices = new ArrayList<>();
         ArrayList<CollisionTriangle> collisionTris = new ArrayList<>();
         ArrayList<Vector3f> collisionVerts = new ArrayList<>();
-        ArrayList<Integer> materialIndexOffsets = new ArrayList<>();
-
-
+        ArrayList<Integer> materialIndexOffsets = new ArrayList<>();;
         int stepBytes = 0;
         for(int i=0; i<mesh32.length; i+=stepBytes)
         {
@@ -42,16 +45,16 @@ public class Mesh32ToMesh
             i+=stepParamByteCount; //Move to data offset of command (step param is 3 bytes long)
             switch(cmd)
             {
-                case Mesh32Commands.CMD_START:
+                case Mesh32CMD.START:
                     break;
-                case Mesh32Commands.CMD_VertexAttribCount:
+                case Mesh32CMD.VertexAttribCount:
                     vertexAttribCount = (mesh32[i] & 0xFF);
                     vertexByteCount = vertexAttribCount * OtherConstants.bytesInFloat;
                     break;
-                case Mesh32Commands.CMD_Tex_Bpp:
+                case Mesh32CMD.TextureBpp:
                     bytesPerPixel = (mesh32[i] & 0xFF)+1;
                     break;
-                case Mesh32Commands.CMD_VertexList:
+                case Mesh32CMD.VertexList:
                     for(int j=0; j< step; j++) //For each vertex
                     {
                         for(int k=0;k<vertexAttribCount; k++) //for each float/attribute
@@ -71,30 +74,30 @@ public class Mesh32ToMesh
                         }
                     }
                     break;
-                case Mesh32Commands.CMD_Material:
+                case Mesh32CMD.Material:
                     materialIndexOffsets.add(indices.size()); //create new index offset for new material
                     String matName = "";
                     for(int j=0; j<step; j++)
                         matName += (char)mesh32[i+j];
                     materials.add(new Material(new ArrayList<Texture>(), matName, 0));
                     break;
-                case Mesh32Commands.CMD_Texture:
+                case Mesh32CMD.Texture:
                     int width = readShortFromBytes(mesh32, i)+1;
                     int height = readShortFromBytes(mesh32, i+2)+1;
                     materials.get(materials.size()-1).addTexture(new Texture(width, height, null));
                     break;
-                case Mesh32Commands.CMD_TextureData:
+                case Mesh32CMD.TextureData:
                     Texture currentTexture = materials.get(materials.size()-1).getLastTexture();
                     byte[] texData = new byte[bytesPerPixel*currentTexture.getWidth()* currentTexture.getHeight()];
                     for(int j=0; j<texData.length; j++)
                         texData[j] = mesh32[i+j];
                     currentTexture.setRawData(texData);
                     break;
-                case Mesh32Commands.CMD_PolygonIndexCount:
+                case Mesh32CMD.PolygonIndexCount:
                     verticesPerPolygon = (mesh32[i] & 0xFF)+1;
                     indexBytesPerPolygon = verticesPerPolygon * OtherConstants.bytesInUInt32;
                     break;
-                case Mesh32Commands.CMD_PolygonIndexList:
+                case Mesh32CMD.PolygonIndexList:
                     for(int j=0; j< step; j++) //For every polygon
                         for(int k=0; k<verticesPerPolygon; k++) //For every index
                             indices.add
@@ -108,30 +111,46 @@ public class Mesh32ToMesh
                                     );
 
                     break;
-                case Mesh32Commands.CMD_TextureMapping:
+                case Mesh32CMD.TextureMapping:
                     if(mesh32[i] == 1) materials.get(materials.size()-1).sphereMapping(true);
                     break;
-                case Mesh32Commands.CMD_Tex_ScrollS:
+                case Mesh32CMD.TextureScrollS:
                     materials.get(materials.size()-1).getLastTexture().scrollFactors.x =
                             readFloatFromBytes(mesh32, i);
                     break;
-                case Mesh32Commands.CMD_Tex_ScrollT:
+                case Mesh32CMD.TextureScrollT:
                     materials.get(materials.size()-1).getLastTexture().scrollFactors.y =
                             readFloatFromBytes(mesh32, i);
                     break;
-                case Mesh32Commands.CMD_Mat_AmbientColor:
-                    float R = (mesh32[i] & 0xFF) / 255.0f;
-                    float G = (mesh32[i+1] & 0xFF) / 255.0f;
-                    float B = (mesh32[i+2] & 0xFF) / 255.0f;
+                case Mesh32CMD.Mat_AmbientColor:
+                    if(step  == 3)
+                    {
+                        float R = (mesh32[i] & 0xFF) / 255.0f;
+                        float G = (mesh32[i+1] & 0xFF) / 255.0f;
+                        float B = (mesh32[i+2] & 0xFF) / 255.0f;
+                        materials.get(materials.size()-1).setAmbientColor(new Vector3f(R, G, B));
+                        break;
+                    }
+                    float R = readFloatFromBytes(mesh32, i);
+                    float G = readFloatFromBytes(mesh32, i+OtherConstants.bytesInFloat);
+                    float B = readFloatFromBytes(mesh32, i+(OtherConstants.bytesInFloat*2));
                     materials.get(materials.size()-1).setAmbientColor(new Vector3f(R, G, B));
                     break;
-                case Mesh32Commands.CMD_Mat_DiffuseColor:
-                    float R_d = (mesh32[i] & 0xFF) / 255.0f;
-                    float G_d = (mesh32[i+1] & 0xFF) / 255.0f;
-                    float B_d = (mesh32[i+2] & 0xFF) / 255.0f;
+                case Mesh32CMD.Mat_DiffuseColor:
+                    if(step == 3)
+                    {
+                        float R_d = (mesh32[i] & 0xFF) / 255.0f;
+                        float G_d = (mesh32[i+1] & 0xFF) / 255.0f;
+                        float B_d = (mesh32[i+2] & 0xFF) / 255.0f;
+                        materials.get(materials.size()-1).setDiffuseColor(new Vector3f(R_d, G_d, B_d));
+                        break;
+                    }
+                    float R_d = readFloatFromBytes(mesh32, i);
+                    float G_d = readFloatFromBytes(mesh32, i+OtherConstants.bytesInFloat);
+                    float B_d = readFloatFromBytes(mesh32, i+(OtherConstants.bytesInFloat*2));
                     materials.get(materials.size()-1).setDiffuseColor(new Vector3f(R_d, G_d, B_d));
                     break;
-                case Mesh32Commands.CMD_CollisionVertices:
+                case Mesh32CMD.CollisionVertices:
                     for(int j=i; j<i+step; j+=(3*4)) //for every vertex offset
                     {
                         float[] vertex = new float[3];
@@ -146,7 +165,7 @@ public class Mesh32ToMesh
                         collisionVerts.add(vectorVtx);
                     }
                     break;
-                case Mesh32Commands.CMD_CollisionPolygons:
+                case Mesh32CMD.CollisionPolygons:
                     for(int j=i; j<i+step; j+= 14) //for every polygon offset
                     {
                         short colType = (short)readShortFromBytes(mesh32, j);
@@ -161,17 +180,65 @@ public class Mesh32ToMesh
                                 ));
                     }
                     break;
-                case Mesh32Commands.CMD_TextureWrap:
+                case Mesh32CMD.TextureWrap:
                     materials.get(materials.size()-1).getLastTexture().setWrappingValue(mesh32[i]);
                     break;
-                case Mesh32Commands.CMD_END: //END Conversion
+                case Mesh32CMD.BoneCount:
+                    allBones = new BoneNode[readShortFromBytes(mesh32, i)];
+                    break;
+                case Mesh32CMD.Bone:
+                    if(currentBone == null)
+                    {
+                        currentBone = new BoneNode(boneIDIncrement, null);
+                        allBones[0] = currentBone;
+                        break;
+                    }
+                    boneIDIncrement++;
+                    BoneNode subBone = new BoneNode(boneIDIncrement, currentBone);
+                    allBones[subBone.ID] = subBone;
+                    currentBone.subBones.add(subBone);
+                    currentBone = subBone;
+                    break;
+                case Mesh32CMD.PopBone:
+                    currentBone = currentBone.parent;
+                    break;
+                case Mesh32CMD.BoneMtx: //Set the raw bone matrix values
+                    for(int j = 0; j < currentBone.transformMtx.length; j++)
+                    {
+                        currentBone.transformMtx[j] =
+                                readFloatFromBytes(
+                                        mesh32,
+                                        i+(OtherConstants.bytesInFloat*j));
+                        if(j < 15 && j >11)
+                            currentBone.transformMtx[j] *= scale; //Raw coords in matrix affected by scale
+                    }
+                    currentBone.inverseOrigin = Arrays.copyOf(currentBone.transformMtx, 16);
+                    break;
+                case Mesh32CMD.BoneName:
+                    currentBone.name = "";
+                    for(int j=0; j<step; j++)
+                        currentBone.name += (char)mesh32[i+j];
+                    break;
+                case Mesh32CMD.END: //END Conversion
                     float[] vertArray =
                             ArrayUtils.toPrimitive(vertexData.toArray(new Float[0]), 0.0F);
                     int[] indexArray = ArrayUtils.toPrimitive(indices.toArray(new Integer[0]), 0);
                     Material[] matArray = materials.toArray(new Material[0]);
                     int[] offsetArray = ArrayUtils.toPrimitive(materialIndexOffsets.toArray(new Integer[0]), 0);
-                    Mesh newMesh = new Mesh(vertArray, indexArray, matArray, offsetArray, 0, collisionTris, 2);
-                    return newMesh;
+                    Model newModel = new Model(vertArray, matArray, collisionTris, 2);
+                    Mesh newMesh;
+                    if(allBones != null && allBones.length > 0)
+                    {
+                        allBones[0].stackOrigins();
+                        allBones[0].invertAllOrigins();
+                        ArrayList<BoneNode> boneList = new ArrayList<>();
+                        boneList.add(allBones[0]);
+                        newMesh = new Mesh(newModel, indexArray, offsetArray, 0, boneList, allBones);
+                        allBones = null; //Reset bones
+                    }
+                    else newMesh = new Mesh(newModel, indexArray, offsetArray, 0);
+                    newModel.addMesh(newMesh);
+                    return newModel;
             }
         }
         return null;

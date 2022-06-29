@@ -1,5 +1,6 @@
 package graphics;
 
+import android.opengl.GLES20;
 import android.opengl.GLES30;
 
 import org.joml.Vector2f;
@@ -15,11 +16,12 @@ public class Material
     int collisionType; //Possibly a placeholder until CollisionMesh class
     String name;
     ArrayList<Texture> textures;
-    Vector3f ambientColor = new Vector3f(0.5f,0.5f, 0.5f);
-    Vector3f diffuseColor = new Vector3f(0.5f,0.5f, 0.5f);
+    Vector3f ambientColor = new Vector3f(1.0f,1.0f, 1.0f); //Fully lit by default
+    Vector3f diffuseColor = new Vector3f(0.0f,0.0f, 0.0f);
     float specularIntensity = 0.0f;
     float shininess = 0.0f;
     private boolean sphereMap = false;
+    public boolean cullBackFace = true;
     private Vector2f scrollFactors = new Vector2f();
     public Material(ArrayList<Texture> textures, String name, int collisionType)
     {
@@ -35,6 +37,8 @@ public class Material
         Shader.materialShininess = this.shininess;
         if(sphereMap) mainTexture.setSphereMapping();
         else mainTexture.setStandardMapping();
+        if(cullBackFace) GLES30.glEnable(GLES30.GL_CULL_FACE);
+        else GLES30.glDisable(GLES30.GL_CULL_FACE);
         GLES30.glUniform1f(Shader.GL_texScrollSLocation, mainTexture.scrollFactors.x);
         GLES30.glUniform1f(Shader.GL_texScrollTLocation, mainTexture.scrollFactors.y);
         GLES30.glUniform3f(Shader.GL_ambientColorUniLocation,

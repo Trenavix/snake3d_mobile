@@ -1,9 +1,5 @@
 package core.collision;
 
-import android.os.Build;
-
-import androidx.annotation.RequiresApi;
-
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
@@ -12,7 +8,7 @@ import java.util.LinkedList;
 import core.Scene;
 import core.objects.GameObject;
 import graphics.Mesh;
-import graphics.Utilities;
+import graphics.Model;
 
 public class Collision
 {
@@ -106,8 +102,8 @@ public class Collision
 
     public static GameObject collisionCheck(Scene scene, GameObject object, Vector3f trajectory)
     {
-        ArrayList<Integer> levelMeshIndices = scene.getLevelMeshIndices();
-        ArrayList<Mesh> levelMeshes = scene.getAllMeshes();
+        ArrayList<Integer> levelMeshIndices = scene.getLevelModelIndices();
+        ArrayList<Model> levelMeshes = scene.getAllModels();
         ArrayList<CollisionTriangle> collisionBuffer = new ArrayList<>();
         float moveLength = new Vector3f(trajectory).sub(object.position).length();
         for(Integer idx : levelMeshIndices)

@@ -12,16 +12,17 @@ import java.lang.reflect.Method;
 
 import core.Scene;
 import graphics.Mesh;
+import graphics.Model;
 import graphics.Utilities;
 
 public class BehavObject extends GameObject
 {
     Class behavClass;
 
-    public BehavObject(Mesh mesh, Vector3f position, Vector3f rotation, float scale, float radius, int sceneIndex, String behaviour)
+    public BehavObject(Model model, Vector3f position, Vector3f rotation, float scale, float radius, int sceneIndex, String behaviour)
             throws ClassNotFoundException
     {
-        super(mesh, position, rotation, scale, radius, sceneIndex);
+        super(model, position, rotation, scale, radius, sceneIndex);
         try {this.behavClass = Class.forName("core.objects.behaviours."+behaviour);}
         catch(ClassNotFoundException e) {e.printStackTrace();}
         this.status = Status.STARTUP;

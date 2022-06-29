@@ -10,7 +10,8 @@ mesh32 models/Coin.mesh32 0.04
 
 #mesh 1:
 mesh32 models/FP_BG.mesh32 1.0
-mesh32 models/cuccoo.mesh32 1.0
+#mesh32 models/cuccoo.mesh32 1.0
+mesh32 models/luigitest.mesh32 0.05
 
 #mesh 2:
 #mesh32 models/box.mesh32 0.01
@@ -23,15 +24,18 @@ mesh32 models/Hailfire.mesh32 0.008
 #mesh32 models/SM_B2.mesh32 0.004
 
 mesh32 models/sparkle.mesh32 0.1
-model_grid 10.0 10.0 25 25 8.0 FFFF00FF
+#model_grid 10.0 10.0 25 25 8.0 FFFF00FF
 
 BG_model 1
 #level_model 2
 level_model 3
 
 player 0 0.0 0.0 0.0 0.0 0.0 0.0 0.500
+#object 0 0.0 10.0 0.0 0.0 0.0 0.0 1 1 FlagAnimated
+#object 0 [0.0 10.0 0.0] [0.0 0.0 0.0] 1 1 FlagAnimated
 object 0 0.0 6.0 0.0 0.0 0.0 0.0 1 0.22 Collectible
 object 0 0.0 12.0 0.0 0.0 0.0 0.0 0.25 0.22 PlayerPosPointLight
+object 2 0.0 12.0 0.0 0.0 0.0 0.0 1.0 0.22 AnimatedModel
 object 0 0.0 8.0 0.0 0.0 0.0 0.0 1 0.2 Collectible
 object 0 0.0 10.0 0.0 0.0 0.0 0.0 1 0.2 Collectible
 object 0 2.0 10.0 0.0 0.0 0.0 0.0 1 0.2 Collectible

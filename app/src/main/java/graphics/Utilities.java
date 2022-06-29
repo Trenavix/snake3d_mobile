@@ -28,9 +28,9 @@ public class Utilities
 
     public static void rotateMatrix3Axes(float[] matrix, Vector3f rotations)
     {
-        Matrix.rotateM(matrix, 0, rotations.x, 1.f, 0.f, 0.f);
-        Matrix.rotateM(matrix, 0, rotations.y, 0.f, 1.f, 0.f);
-        Matrix.rotateM(matrix, 0, rotations.z, 0.f, 0.f, 1.f);
+        if(rotations.x != 0.0f) Matrix.rotateM(matrix, 0, rotations.x, 1.f, 0.f, 0.f);
+        if(rotations.y != 0.0f) Matrix.rotateM(matrix, 0, rotations.y, 0.f, 1.f, 0.f);
+        if(rotations.z != 0.0f) Matrix.rotateM(matrix, 0, rotations.z, 0.f, 0.f, 1.f);
     }
     public static Vector3f orientationToDirectionVector(Vector2f rotations)
     {

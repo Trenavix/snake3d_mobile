@@ -10,15 +10,13 @@ import java.util.LinkedList;
 
 import core.objects.BehavObject;
 import core.objects.GameObject;
-import core.objects.LightObject;
 import core.objects.PlayerObject;
 import core.objects.Status;
 import functions.DoubleObject;
 import functions.conversions.Mesh32ToMesh;
-import functions.conversions.OBJ2Mesh;
 import graphics.Camera;
-import graphics.Material;
 import graphics.Mesh;
+import graphics.Model;
 import graphics.Shader;
 import graphics.generators.MeshGenerators;
 
@@ -31,14 +29,14 @@ import androidx.annotation.RequiresApi;
 
 public class Scene
 {
-    private ArrayList<Mesh> meshes = new ArrayList<Mesh>();
+    private ArrayList<Model> models = new ArrayList<Model>();
     private DoubleObject masterVtxIdxBuffers;
     private Integer playerObjectIndex;
     private LinkedList<GameObject> objects = new LinkedList<>();
     private ArrayList<GameObject> pendingObjects = new ArrayList<>();
-    private ArrayList<Integer> levelMeshIndices = new ArrayList<Integer>();
-    private Integer backgroundMeshIndex;
-    private final int alphaMeshIndex = 1;
+    private ArrayList<Integer> levelModelIndices = new ArrayList<Integer>();
+    private Integer BGModelIndex;
+    private final int alphaModelIndex = 1;
     public Camera cam = new Camera(new Vector3f(0,0,0), new Vector2f(4.725f, 0), 0.005f, 3.f);//start looking backward (-1.5*pi)
 
     @RequiresApi(api = Build.VERSION_CODES.N)
@@ -50,15 +48,15 @@ public class Scene
             switch(line[0]) //First "word" in each line (command)
             {
                 case "BG_model":
-                    backgroundMeshIndex = Integer.parseInt(line[1]);
-                    meshes.get(backgroundMeshIndex).depthBufferWritingEnabled = false;
+                    BGModelIndex = Integer.parseInt(line[1]);
+                    models.get(BGModelIndex).meshes.get(0).depthBufferWritingEnabled = false;
                     break;
                 case "level_model":
-                    int levelMeshIdx = Integer.parseInt(line[1]);
-                    levelMeshIndices.add(levelMeshIdx);
+                    int levelModelIdx = Integer.parseInt(line[1]);
+                    levelModelIndices.add(levelModelIdx);
                     break;
                 case "model_obj": //'Load obj file as mesh'
-                    String[] objFile = AssetLoader.readFileAsText(line[1]);
+                    /*String[] objFile = AssetLoader.readFileAsText(line[1]);
                     String[] mtlFile = AssetLoader.readFileAsText(line[2]);
                     int defaultCollisionType = Integer.parseInt(line[4]);
                     String[] materialNames = OBJ2Mesh.objGetTextureNames(objFile);
@@ -70,14 +68,14 @@ public class Scene
                     if(line.length > 6) scale = Float.parseFloat(line[6]); //optional scale in script
                     Mesh newMesh = OBJ2Mesh.convertOBJToMesh(objFile, textures, scale, Float.parseFloat(line[5]), new Vector3f(Shader.lightDirection).mul(-1.0f));
                     newMesh.loadTexturesIntoGL();
-                    meshes.add(newMesh);
+                    meshes.add(newMesh);*/
                     break;
                 case "mesh32":
                     byte[] mesh32Data = AssetLoader.readFileAsByteArray(line[1]);
                     float meshScale = Float.parseFloat(line[2]);
-                    Mesh mesh32 = Mesh32ToMesh.Mesh32ToMesh(mesh32Data, meshScale);
+                    Model mesh32 = Mesh32ToMesh.Mesh32ToModel(mesh32Data, meshScale);
                     mesh32.loadTexturesIntoGL();
-                    meshes.add(mesh32);
+                    models.add(mesh32);
                     break;
                 case "model_grid": //generate Grid mesh
                     float gridWidth = Float.parseFloat(line[1]);
@@ -86,10 +84,10 @@ public class Scene
                     short partitions_y = Short.parseShort(line[4]);
                     float offset_y = Float.parseFloat(line[5]);
                     int color = (int)Long.parseLong(line[6], 16);
-                    Mesh gridMesh = MeshGenerators.generateGridMesh(gridWidth, gridHeight, partitions_x, partitions_y, offset_y, color);
+                    Model gridMesh = MeshGenerators.generateGridMesh(gridWidth, gridHeight, partitions_x, partitions_y, offset_y, color);
                     gridMesh.loadTexturesIntoGL();
-                    meshes.add(gridMesh);
-                    objects.add(new GameObject(meshes.get(meshes.size()-1), new Vector3f(), new Vector3f(), 1.0f, 1.0f, meshes.size()));
+                    models.add(gridMesh);
+                    objects.add(new GameObject(models.get(models.size()-1), new Vector3f(), new Vector3f(), 1.0f, 1.0f, models.size()));
                     break;
                 case "behavObject":
                 case "object":
@@ -98,43 +96,71 @@ public class Scene
                     Vector3f rot = new Vector3f(Float.parseFloat(line[5]), Float.parseFloat(line[6]), Float.parseFloat(line[7]));
                     float objectScale = Float.parseFloat(line[8]);
                     float objectRadius = Float.parseFloat(line[9]);
-                    if(line.length > 10) objects.add(new BehavObject(meshes.get(meshIdx), pos, rot, objectScale, objectRadius, meshes.size(), line[10]));
-                    else objects.add(new GameObject(meshes.get(meshIdx), pos, rot, objectScale, objectRadius, meshes.size()));
+                    if(line.length > 10) objects.add(new BehavObject(models.get(meshIdx), pos, rot, objectScale, objectRadius, models.size(), line[10]));
+                    else objects.add(new GameObject(models.get(meshIdx), pos, rot, objectScale, objectRadius, models.size()));
                     break;
                 case "player":
                     int playerMeshIdx = Integer.parseInt(line[1]);
                     Vector3f playerPos = new Vector3f(Float.parseFloat(line[2]), Float.parseFloat(line[3]), Float.parseFloat(line[4]));
                     Vector3f playerRot = new Vector3f(Float.parseFloat(line[5]), Float.parseFloat(line[6]), Float.parseFloat(line[7]));
                     float playerScale = Float.parseFloat(line[8]);
-                    objects.add(new PlayerObject(meshes.get(playerMeshIdx), playerPos, playerRot, playerScale, 0.07f, 0.3f, meshes.size()));
+                    objects.add(new PlayerObject(models.get(playerMeshIdx), playerPos, playerRot, playerScale, 0.07f, 0.3f, models.size()));
                     playerObjectIndex = objects.size()-1; //last index
                     break;
                 //TODO: Implement more commands in scene script language
             }
         }
-        masterVtxIdxBuffers = functions.Buffers.combineAllMeshBuffers(meshes);
+        processObjectsSingleThreaded(); //Allows initialising behavObjects TO INITIALISE before the master buffer generates
+        masterVtxIdxBuffers = functions.Buffers.combineAllMeshBuffers(models);
         functions.Buffers.swapVertexBuffers(
                 (float[])masterVtxIdxBuffers.firstObject, (int[])masterVtxIdxBuffers.secondObject);
     }
 
-    public void addMesh(Mesh newMesh) { meshes.add(newMesh); }
-    public Mesh getMesh(int meshIndex) { return meshes.get(meshIndex); }
-    public ArrayList<Mesh> getAllMeshes() { return meshes; }
+    public void addModel(Model newModel) { models.add(newModel); }
+    public Model getModel(int meshIndex) { return models.get(meshIndex); }
+    public ArrayList<Model> getAllModels() { return models; }
     public PlayerObject getPlayer() {return (PlayerObject)objects.get(playerObjectIndex); }
-    public ArrayList<Integer> getLevelMeshIndices() {return levelMeshIndices; }
+    public ArrayList<Integer> getLevelModelIndices() {return levelModelIndices; }
     public LinkedList<GameObject> getObjects() {return objects; }
-    public int meshCount() {return meshes.size();}
+    public int meshCount() {return models.size();}
 
-    @RequiresApi(api = Build.VERSION_CODES.N)
     public void drawScene(float[] worldMatrix, int GL_worldMatrixLocation, int GL_alphaTestUniLocation, Vector3f camPosition) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException
     {
+        addPendingObjects();
         //PROCESS OBJECTS IN PARALLEL FIRST
-        if(pendingObjects.size() >0) //Add all pending objects
+        processObjectsParallel();
+        Shader.updateLightCountInGL();
+        //NOW DRAW THE SCENE WITH OBJECTS
+        Shader.currentLightCount = 0;
+        GLES30.glUniform1f(GL_alphaTestUniLocation, 0.0f); //alphaTest disable
+        drawBackground();
+        for(int i = 0; i< levelModelIndices.size(); i++) //Draw level models
         {
-            for(GameObject object : pendingObjects)
-                objects.addLast(object);
-            pendingObjects = new ArrayList<GameObject>();
+            if(i == alphaModelIndex) continue; //Alpha model
+            getModel(levelModelIndices.get(i)).drawModel();
         }
+        GLES30.glEnable(GLES30.GL_DEPTH_TEST);
+        GLES30.glDepthRangef(0.f, 1.f);
+        GLES30.glDepthMask(true);
+        GLES30.glDepthFunc(GLES30.GL_LESS);
+        for(GameObject object : objects)
+            object.drawObject();
+        if(levelModelIndices.size() > 1) //Alpha level model
+        {
+            GLES30.glDisable(GLES30.GL_CULL_FACE);
+            getModel(levelModelIndices.get(alphaModelIndex)).drawModel();
+            GLES30.glEnable(GLES30.GL_CULL_FACE);
+        }
+        GLES30.glUniform1f(GL_alphaTestUniLocation, 0.1f);
+        GarbageCollectionRoutine();
+    }
+
+    public Camera getCamera()
+    {return this.cam; }
+
+    private void processObjectsParallel()
+    {
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.N) {return;}
         objects.parallelStream().forEach((object) ->
         {
             Class objectClass = object.getClass();
@@ -149,55 +175,60 @@ public class Scene
                 catch (IllegalAccessException e) { e.printStackTrace(); }
             }
         });
-        Shader.updateLightCountInGL();
-        //NOW DRAW THE SCENE WITH OBJECTS
-        Shader.currentLightCount = 0;
-        GLES30.glUniform1f(GL_alphaTestUniLocation, 0.0f); //alphaTest disable
-        Matrix.translateM(worldMatrix, 0, camPosition.x, camPosition.y, camPosition.z); //Place BG at cameraPos
-        GLES30.glUniformMatrix4fv(GL_worldMatrixLocation, 1, false, floatArrayToBuffer(worldMatrix, true)); //update worldMtx
-        if(backgroundMeshIndex != null) getMesh(backgroundMeshIndex).drawMesh(); //draw BG
-        Matrix.setIdentityM(worldMatrix, 0); //reset worldMtx (start of frame-build)
-        GLES30.glUniformMatrix4fv(GL_worldMatrixLocation, 1, false, floatArrayToBuffer(worldMatrix, true));
-        for(int i=0; i<levelMeshIndices.size(); i++) //Draw level models
-        {
-            if(i == alphaMeshIndex) continue; //Alpha model
-            getMesh(levelMeshIndices.get(i)).drawMesh();
-        }
-        GLES30.glEnable(GLES30.GL_DEPTH_TEST);
-        GLES30.glDepthRangef(0.f, 1.f);
-        GLES30.glDepthMask(true);
-        GLES30.glDepthFunc(GLES30.GL_LESS);
+    }
+    private void processObjectsSingleThreaded()
+    {
         for(GameObject object : objects)
-            object.drawObject();
-        if(levelMeshIndices.size() > 1)
         {
-            //getMesh(levelMeshIndices.get(alphaMeshIndex)).depthBufferWritingEnabled = false;
-            //getMesh(levelMeshIndices.get(alphaMeshIndex)).drawOnTopOfAllGeometry = true;
-            GLES30.glDisable(GLES30.GL_CULL_FACE);
-            getMesh(levelMeshIndices.get(alphaMeshIndex)).drawMesh();
-            GLES30.glEnable(GLES30.GL_CULL_FACE);
+            Class objectClass = object.getClass();
+            if(objectClass.equals(BehavObject.class))
+            {
+                try
+                {
+                    ((BehavObject)object).runBehaviour(this);
+                }
+                catch (NoSuchMethodException e) {e.printStackTrace();}
+                catch (InvocationTargetException e) {e.printStackTrace();}
+                catch (IllegalAccessException e) { e.printStackTrace(); }
+            }
         }
-        Matrix.setIdentityM(worldMatrix, 0); //Reset worldMtx after last object!
-        GLES30.glUniformMatrix4fv(GL_worldMatrixLocation, 1, false, floatArrayToBuffer(worldMatrix, true));
-        GLES30.glUniform1f(GL_alphaTestUniLocation, 0.1f);
+    }
 
+    private void GarbageCollectionRoutine()
+    {
         //Object removal and mesh garbage collection below:
         for(int i=0; i<objects.size(); i++)
             if(objects.get(i).status == Status.DEAD)
             {
-                Mesh objMesh = objects.get(i).getMeshReference();
+                Model objModel = objects.get(i).getModelReference();
                 objects.remove(i);
                 for(GameObject object: objects)
-                    if(object.getMeshReference().equals(objMesh)) return;
-                int trashIdx = meshes.indexOf(objMesh);
-                meshes.remove(trashIdx); //delete mesh
+                    if(object.getModelReference().equals(objModel)) return;
+                int trashIdx = models.indexOf(objModel);
+                models.remove(trashIdx); //delete mesh
                 for(GameObject object : objects)
                     if(object.meshSceneIndex > trashIdx) object.meshSceneIndex--;
             }
     }
 
-    public Camera getCamera()
-    {return this.cam; }
+    private void drawBackground()
+    {
+        Matrix.translateM(Renderer.worldMatrix, 0, cam.position.x, cam.position.y, cam.position.z); //Place BG at cameraPos
+        GLES30.glUniformMatrix4fv(Shader.GL_modelMatrixLocations[0], 1, false, floatArrayToBuffer(Renderer.worldMatrix, true)); //update worldMtx
+        if(BGModelIndex != null) getModel(BGModelIndex).drawModel(); //draw BG
+        Matrix.setIdentityM(Renderer.worldMatrix, 0); //reset worldMtx (start of frame-build)
+        GLES30.glUniformMatrix4fv(Shader.GL_modelMatrixLocations[0], 1, false, floatArrayToBuffer(Renderer.worldMatrix, true));
+    }
+
+    private void addPendingObjects()
+    {
+        if(pendingObjects.size() >0) //Add all pending objects
+        {
+            for(GameObject object : pendingObjects)
+                objects.addLast(object);
+            pendingObjects = new ArrayList<GameObject>();
+        }
+    }
 
     public void addObject(GameObject newObject)
     {

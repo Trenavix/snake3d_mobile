@@ -1,9 +1,9 @@
 package graphics;
 
 import android.opengl.GLES30;
+import android.os.Build;
 import android.util.Log;
 
-import org.joml.Vector2f;
 import org.joml.Vector3f;
 
 import core.AssetLoader;
@@ -11,6 +11,7 @@ import core.AssetLoader;
 public class Shader
 {
     public static final int MAX_POINT_LIGHTS = 8;
+    public static final int MAX_BONES = 64;
     private final static String vertCode =
             AssetLoader.readFileAsSingleString("shaders/shader.vert");
     private final static String fragCode =
@@ -22,10 +23,11 @@ public class Shader
     public static int vertColorHandle;
     public static int vertNormalHandle;
     public static int vertWeightHandle;
-    public static int GL_worldMatrixLocation; //GL Matrix locations
+    public static int vertBoneHandle;
     public static int GL_viewMatrixLocation;
     public static int GL_projMatrixLocation;
-    public static int GL_weightMatrixLocation;
+    public static int[] GL_modelMatrixLocations = new int[MAX_BONES];
+    public static int[] GL_parentMtxIdxLocations = new int[MAX_BONES];
     public static int GL_texUniLocation;
     public static int GL_specularIntensityUniLocation;
     public static int GL_ambientColorUniLocation;
@@ -71,6 +73,7 @@ public class Shader
         vertColorHandle = GLES30.glGetAttribLocation(program, "vertColor");
         vertNormalHandle = GLES30.glGetAttribLocation(program, "vertNormal");
         vertWeightHandle = GLES30.glGetAttribLocation(program, "vertWeight");
+        vertBoneHandle = GLES30.glGetAttribLocation(program, "vertBoneIdx");
         GLES30.glUseProgram(program);
     }
 
@@ -82,11 +85,10 @@ public class Shader
         GLES30.glEnableVertexAttribArray(Shader.vertColorHandle);
         GLES30.glEnableVertexAttribArray(Shader.vertNormalHandle);
         GLES30.glEnableVertexAttribArray(Shader.vertWeightHandle);
+        GLES30.glEnableVertexAttribArray(Shader.vertBoneHandle);
         int program = Shader.program;
-        GL_worldMatrixLocation = GLES30.glGetUniformLocation(program, "mWorld");
         GL_viewMatrixLocation = GLES30.glGetUniformLocation(program, "mView");
         GL_projMatrixLocation = GLES30.glGetUniformLocation(program, "mProj");
-        GL_weightMatrixLocation = GLES30.glGetUniformLocation(program, "mWeighted");
         GL_texUniLocation = GLES30.glGetUniformLocation(program, "u_Texture");
         GL_ambientColorUniLocation = GLES30.glGetUniformLocation(program, "u_Light.ambientColor");
         GL_diffuseColorUniLocation = GLES30.glGetUniformLocation(program, "u_Light.diffuseColor");
@@ -114,6 +116,15 @@ public class Shader
             GL_PtLightAttenLinearUniLocations[i] = GLES30.glGetUniformLocation(program, ptLight+".atten.linear");
             GL_PtLightAttenExpUniLocations[i] = GLES30.glGetUniformLocation(program, ptLight+".atten.exp");
         }
+        for(int i=0; i < MAX_BONES; i++)
+        {
+            String mtx = "mModels["+Integer.toString(i)+"]"; //generates i.e. "mModels[1]"
+            String parentIdx = "parentMtxIndices["+Integer.toString(i)+"]"; //generates i.e. "parentMtxIndices[1]"
+            String bonePos = "bonePositions["+Integer.toString(i)+"]"; //generates i.e. "bonePositions[1]"
+            GL_modelMatrixLocations[i] = GLES30.glGetUniformLocation(program, mtx);
+            GL_parentMtxIdxLocations[i] = GLES30.glGetUniformLocation(program, parentIdx);
+        }
+        GLES30.glUniform1i(GL_parentMtxIdxLocations[0], 0); //set parent mtx from world to world
     }
 
     private static int loadShader(int type, String shaderText)

@@ -78,8 +78,7 @@ public class Renderer implements GLSurfaceView.Renderer
         Matrix.setIdentityM(worldMatrix, 0);
         float aspectRatio = (float) width / height;
         Utilities.perspectiveFrustrum(projMatrix, 45, aspectRatio, 0.3f, 200.0f);
-        GLES30.glUniformMatrix4fv(Shader.GL_worldMatrixLocation, 1, false, floatArrayToBuffer(worldMatrix, true));
-        GLES30.glUniformMatrix4fv(Shader.GL_weightMatrixLocation, 1, false, floatArrayToBuffer(worldMatrix, true));
+        GLES30.glUniformMatrix4fv(Shader.GL_modelMatrixLocations[0], 1, false, floatArrayToBuffer(worldMatrix, true));
         GLES30.glUniformMatrix4fv(Shader.GL_projMatrixLocation, 1, false, floatArrayToBuffer(projMatrix, true));
     }
 
@@ -108,8 +107,7 @@ public class Renderer implements GLSurfaceView.Renderer
         }
         GLES30.glUniformMatrix4fv(Shader.GL_viewMatrixLocation, 1, false, floatArrayToBuffer(viewMatrix, true));
         Matrix.setIdentityM(worldMatrix, 0);
-        GLES30.glUniformMatrix4fv(Shader.GL_worldMatrixLocation, 1, false, floatArrayToBuffer(worldMatrix, true));
-        GLES30.glUniformMatrix4fv(Shader.GL_weightMatrixLocation, 1, false, floatArrayToBuffer(worldMatrix, true));
+        GLES30.glUniformMatrix4fv(Shader.GL_modelMatrixLocations[0], 1, false, floatArrayToBuffer(worldMatrix, true));
         GLES30.glUniform1i(Shader.GL_texUniLocation, 0);
         GLES30.glUniform3f(Shader.GL_ambientColorUniLocation, 1.0f, 1.0f, 1.0f);
         Shader.lightDirection.normalize();
@@ -122,7 +120,7 @@ public class Renderer implements GLSurfaceView.Renderer
         GLES30.glUniform1f(Shader.GL_timeLocation, (float)Shader.time);
         try
         {
-            currentScene.drawScene(worldMatrix, Shader.GL_worldMatrixLocation, Shader.GL_alphaTestUniLocation, cam.position);
+            currentScene.drawScene(worldMatrix, Shader.GL_modelMatrixLocations[0], Shader.GL_alphaTestUniLocation, cam.position);
         }
         catch(NoSuchMethodException e) {e.printStackTrace(); }
         catch (InvocationTargetException e) { e.printStackTrace(); }

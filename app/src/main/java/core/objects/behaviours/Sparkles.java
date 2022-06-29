@@ -1,7 +1,5 @@
 package core.objects.behaviours;
 
-import android.opengl.GLES30;
-
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
@@ -12,7 +10,6 @@ import core.Scene;
 import core.objects.BehavObject;
 import core.objects.GameObject;
 import core.objects.LightObject;
-import core.objects.PlayerObject;
 import core.objects.Status;
 import graphics.Mesh;
 import graphics.Shader;
@@ -21,13 +18,13 @@ public class Sparkles
 {
     public static void main(BehavObject object, Scene currentScene) throws InvocationTargetException, NoSuchMethodException, IllegalAccessException, ClassNotFoundException
     {
-        Mesh mesh = object.getMeshReference();
+        Mesh mesh = object.getModelReference().meshes.get(0);
         mesh.billboard = true;
         mesh.setScale(new Vector3f(object.scale));
         mesh.rotation.x = -(float)Shader.time/12.f;
         if(object.status == Status.STARTUP)
         {
-            currentScene.addMesh(object.getMeshReference().cloneMesh());
+            currentScene.addModel(object.getModelReference().cloneModel());
             int meshCount = currentScene.meshCount();
             object.setMeshFromScene(currentScene.meshCount()-1, currentScene);
             //mesh.depthBufferWritingEnabled = false;
@@ -37,15 +34,15 @@ public class Sparkles
             LightObject light = (LightObject)object.getSubObjects().getFirst();
             //light.setAmbientColor(new Vector3f(-0.2f, -1.2f, -1.9f));
             //light.setDiffuseColor(new Vector3f(0.2f, -0.6f, -1.25f));
-            object.getSubObjects().add(new GameObject(object.getMeshReference(), new Vector3f(), new Vector3f(), 1.0f, object.getInteractionRadius(), meshCount));
+            object.getSubObjects().add(new GameObject(object.getModelReference(), new Vector3f(), null, 1.0f, object.getInteractionRadius(), meshCount));
             object.getSubObjects().getLast().position.z = 0.1f;
-            object.getSubObjects().add(new GameObject(object.getMeshReference(), new Vector3f(), new Vector3f(), 1.0f, object.getInteractionRadius(), meshCount));
+            object.getSubObjects().add(new GameObject(object.getModelReference(), new Vector3f(), null, 1.0f, object.getInteractionRadius(), meshCount));
             object.getSubObjects().getLast().position.z = -0.1f;
-            object.getSubObjects().add(new GameObject(object.getMeshReference(), new Vector3f(), new Vector3f(), 1.0f, object.getInteractionRadius(), meshCount));
+            object.getSubObjects().add(new GameObject(object.getModelReference(), new Vector3f(), null, 1.0f, object.getInteractionRadius(), meshCount));
             object.getSubObjects().getLast().position.x = 0.1f;
-            object.getSubObjects().add(new GameObject(object.getMeshReference(), new Vector3f(), new Vector3f(), 1.0f, object.getInteractionRadius(), meshCount));
+            object.getSubObjects().add(new GameObject(object.getModelReference(), new Vector3f(), null, 1.0f, object.getInteractionRadius(), meshCount));
             object.getSubObjects().getLast().position.x = -0.1f;
-            object.getSubObjects().add(new GameObject(object.getMeshReference(), new Vector3f(), new Vector3f(), 1.0f, object.getInteractionRadius(), meshCount));
+            object.getSubObjects().add(new GameObject(object.getModelReference(), new Vector3f(), null, 1.0f, object.getInteractionRadius(), meshCount));
             object.getSubObjects().getLast().position.y = 0.1f;
             return;
         }

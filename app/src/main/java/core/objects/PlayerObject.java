@@ -4,19 +4,16 @@ import android.opengl.GLES30;
 import android.opengl.Matrix;
 import android.os.Build;
 
-import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedList;
 
 import core.Scene;
 import core.collision.Collision;
-import core.collision.CollisionTriangle;
 import functions.OtherConstants;
 import graphics.Mesh;
+import graphics.Model;
 import graphics.Shader;
 import graphics.Utilities;
 import core.Renderer;
@@ -29,9 +26,9 @@ public class PlayerObject extends GameObject
 {
     float fixedSpeed;
     int maxPathSize = 1;
-    public PlayerObject(Mesh mesh, Vector3f position, Vector3f rotation, float scale, float speed, float radius, int sceneIndex)
+    public PlayerObject(Model model, Vector3f position, Vector3f rotation, float scale, float speed, float radius, int sceneIndex)
     {
-        super(mesh, position, rotation, scale, radius, sceneIndex);
+        super(model, position, rotation, scale, radius, sceneIndex);
         this.fixedSpeed = speed;
     }
 
@@ -82,7 +79,7 @@ public class PlayerObject extends GameObject
     private void addToPath(Vector3f pos)
     {
         if(subObjects.size() > maxPathSize) subObjects.removeFirst();
-        subObjects.add(new PlayerObject(getMeshReference(), pos, rotation, scale, fixedSpeed, getInteractionRadius(), meshSceneIndex));
+        subObjects.add(new PlayerObject(getModelReference(), pos, rotation, scale, fixedSpeed, getInteractionRadius(), meshSceneIndex));
         subObjects.getLast().setAngularVector(angularVector);
     }
 
@@ -98,7 +95,7 @@ public class PlayerObject extends GameObject
         Matrix.scaleM(Renderer.worldMatrix, 0, objectScale, objectScale, objectScale);
         Matrix.rotateM(Renderer.worldMatrix, 0, angularVector.w, angularVector.x, angularVector.y, angularVector.z);
         GLES30.glUniformMatrix4fv(
-                Shader.GL_worldMatrixLocation,
+                Shader.GL_modelMatrixLocations[0],
                 1,
                 false,
                 floatArrayToBuffer(Renderer.worldMatrix, true)
@@ -107,15 +104,15 @@ public class PlayerObject extends GameObject
     public void drawObject()
     {
         float[] storeMatrix = Arrays.copyOf(Renderer.worldMatrix, Renderer.worldMatrix.length); //store copy
-        drawObjectMesh();
+        drawObjectModel();
         for(GameObject subObject : getSubObjects()) //draw all subObjects
-            subObject.drawObjectMesh();
+            subObject.drawObjectModel();
         Renderer.worldMatrix = storeMatrix; //restore
     }
 
-    public void drawObjectMesh()
+    public void drawObjectModel()
     {
         placeObjectInWorld();
-        getMeshReference().drawMesh();
+        getModelReference().drawModel();
     }
 }
