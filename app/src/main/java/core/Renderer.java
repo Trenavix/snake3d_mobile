@@ -55,6 +55,7 @@ public class Renderer implements GLSurfaceView.Renderer
         GLES30.glBindBuffer(GLES30.GL_ELEMENT_ARRAY_BUFFER, vboBufferIDs.get(1));
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.N)
     public void prepareScene() throws ClassNotFoundException //before we begin per-frame, setup the scene and buffers etc
     {
         GLES30.glEnable(GLES30.GL_TEXTURE_2D);
@@ -82,18 +83,16 @@ public class Renderer implements GLSurfaceView.Renderer
         GLES30.glUniformMatrix4fv(Shader.GL_projMatrixLocation, 1, false, floatArrayToBuffer(projMatrix, true));
     }
 
-    @SuppressLint("NewApi")
-    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
-    public void onDrawFrame(GL10 gl)
+    private void prepareFrame()
     {
-        long newTime = System.nanoTime();
-        long deltaTime = newTime - frameTime;
-        frameTimeRatio = deltaTime/ nanoSecondsIn60FPS;
-        Shader.time += frameTimeRatio;
-        //if(Shader.time > 100.0f) Shader.time /= 100.0f;
-        frameTime = newTime;
         GLES30.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT | GLES30.GL_DEPTH_BUFFER_BIT);
+        positionCamera();
+        prepareShader();
+    }
+
+    private void positionCamera()
+    {
         Camera cam = currentScene.getCamera();
         if(currentScene.getPlayer() != null) cam.followPos(currentScene.getPlayer().position, viewMatrix); //If player exists, 3rd person cam
         else //otherwise 1st person
@@ -105,6 +104,10 @@ public class Renderer implements GLSurfaceView.Renderer
                     cam.lookAt.x, cam.lookAt.y, cam.lookAt.z,
                     0.0f, 1.0f, 0.0f);
         }
+    }
+
+    private void prepareShader()
+    {
         GLES30.glUniformMatrix4fv(Shader.GL_viewMatrixLocation, 1, false, floatArrayToBuffer(viewMatrix, true));
         Matrix.setIdentityM(worldMatrix, 0);
         GLES30.glUniformMatrix4fv(Shader.GL_modelMatrixLocations[0], 1, false, floatArrayToBuffer(worldMatrix, true));
@@ -118,22 +121,33 @@ public class Renderer implements GLSurfaceView.Renderer
         GLES30.glUniform1f(Shader.GL_specularIntensityUniLocation, Shader.specularIntensity);
         GLES30.glUniform1f(Shader.GL_shininessUniLocation, Shader.materialShininess);
         GLES30.glUniform1f(Shader.GL_timeLocation, (float)Shader.time);
+    }
+
+    @SuppressLint("NewApi")
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
+    public void onDrawFrame(GL10 gl)
+    {
+        long newTime = System.nanoTime();
+        long deltaTime = newTime - frameTime;
+        frameTimeRatio = deltaTime/ nanoSecondsIn60FPS;
+        Shader.time += frameTimeRatio;
+        //if(Shader.time > 100.0f) Shader.time /= 100.0f;
+        frameTime = newTime;
+        prepareFrame();
         try
-        {
-            currentScene.drawScene(worldMatrix, Shader.GL_modelMatrixLocations[0], Shader.GL_alphaTestUniLocation, cam.position);
-        }
+            { currentScene.drawScene();}
         catch(NoSuchMethodException e) {e.printStackTrace(); }
         catch (InvocationTargetException e) { e.printStackTrace(); }
         catch (IllegalAccessException e) { e.printStackTrace(); }
-        try {
-            move();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
+        try
+            { move();}
+        catch (ClassNotFoundException e)
+            { e.printStackTrace(); }
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
-    private static void move() throws ClassNotFoundException {
+    private static void move() throws ClassNotFoundException
+    {
         PlayerObject currentPlayer = null;
         if(currentScene != null) currentPlayer = currentScene.getPlayer();
         if(currentPlayer != null)

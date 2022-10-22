@@ -17,4 +17,6 @@ public class OtherConstants
     public final static int polygonType_TRIANGLE=0;
     public final static int polygonType_LINE=1;
     public final static double nanoSecondsIn60FPS = 16666666.66666666667;
+    public final static float fixedTicksPerSecond = 144;
+    public final static double fixedTickDeltaTime = 1000000000/fixedTicksPerSecond;
 }

@@ -53,6 +53,5 @@ public class LightObject extends GameObject
     {
         this.status = Status.DEAD;
         GLES30.glUniform1f(Shader.GL_PtLightAttenExpUniLocations[lightIndex], 1000.0f);
-
     }
 }

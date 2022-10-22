@@ -23,6 +23,8 @@ public class GameObject extends Entity
     Vector4f angularVector = new Vector4f(0,0,0,0);
     private Model model;
     public Vector3f rotation;
+    public Vector3f previousPosition;
+    public Vector3f velocity = new Vector3f();
     public float scale;
     private float radius; //interaction radius i.e. core.collision
     LinkedList<GameObject> subObjects;
@@ -39,6 +41,7 @@ public class GameObject extends Entity
         this.radius = radius;
         this.subObjects = new LinkedList<GameObject>();
         this.meshSceneIndex = sceneIndex;
+        this.previousPosition = position;
         this.status = Status.LIVE;
     }
     private void setMeshIndex(Scene scene, int idx) { this.meshSceneIndex = idx; }
@@ -85,7 +88,11 @@ public class GameObject extends Entity
     public LinkedList<GameObject> getSubObjects() {return subObjects; }
     public Model getModelReference() {return model; }
     public void delete(){ this.status = Status.DEAD; }
-    public void setNewPosition(Vector3f newPos) {position = newPos;}
+    public void setNewPosition(Vector3f newPos)
+    {
+        previousPosition = new Vector3f(position);
+        position = newPos;
+    }
     public void setMeshFromScene(int index, Scene scene)
     {
         this.model = scene.getModel(index);

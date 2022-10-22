@@ -3,7 +3,7 @@ This project is in an alpha stage.
 It plans to be a full game engine running on android and a continuation of a previous project, snake3D, which was written in C++.
 The project currently features:
 * A Mesh class format containing vertices, indices (to triangles), materials, and submeshes (for bone rigging)
-* A custom binary format ("mesh32") containing various data including vertices, polygon indices, materials, aimed to load into the engine quickly
+* A custom binary format ("mesh32") containing various data including vertices, polygon indices, materials, and bones/armature, aimed to load into the engine quickly
 * An efficient collision detection routine
 * Octree setup for optimised collision on large meshes ie levels (reduces iteration count significantly)
 * A scene script system for setting up scenes/levels with meshes/objects
@@ -11,12 +11,13 @@ The project currently features:
 * A behaviour system for objects
 * A movable player and functioning 3rd person camera
 * Object-to-object collision for interactions (i.e. collectible objects)
+* Übershaders that support a wide range of functions like texture scrolling, bone animation, billboarding, alpha-testing, amongst others
 
 Upcoming plans:
 * Dynamic alpha sorting objects
 * Alpha level meshes to be split by nodes and merged with objects for alpha sorting
-* Code new mesh32 model converter that supports animation rigging (weighted vertices)
 * Use JNI to run some methods under C++ for better data management (mesh32 to Mesh could get a speedup on scene creation)
+* Implement multi-texturing with multiple UV sets for various effects such as moving cloud shadows
 
 Screenshots:
 

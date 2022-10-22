@@ -11,6 +11,7 @@ import java.util.Arrays;
 
 import core.Scene;
 import core.collision.Collision;
+import core.objects.behaviours.behavFunc.Generic;
 import functions.OtherConstants;
 import graphics.Mesh;
 import graphics.Model;
@@ -32,27 +33,36 @@ public class PlayerObject extends GameObject
         this.fixedSpeed = speed;
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.N)
-    public void moveForward(float angle, float magnitude, Vector3f cameraPosition, Scene currentScene) throws ClassNotFoundException {
+    public void moveForward(float angle, float magnitude, Vector3f cameraPosition, Scene currentScene) throws ClassNotFoundException
+    {
+        Vector3f trajectory;
+        if(magnitude <= 0.0f)
+        {
+            trajectory = new Vector3f(position); //ignore control code if no analog input
+            Vector3f direction = new Vector3f(trajectory).sub(position).normalize();
+            angularVector = Utilities.vectorNormToAngularVector(direction, new Vector3f(0,0,1));
+            Generic.gravitateObject(currentScene, this);
+            trajectory.add(velocity.mul((float)Renderer.frameTimeRatio));
+            Collision.collisionCheck(currentScene, this, trajectory);
+            return;
+        }
         //Do not ask how this works because I cannot answer
         angle *= OtherConstants.DEG2RAD; //Convert deg to rads
         Vector3f forward = new Vector3f();
         position.sub(cameraPosition, forward);
-        forward.normalize();
-        Vector3f autoMove = (new Vector3f(forward).mul(new Vector3f(1,0,1)).normalize().mul(fixedSpeed));
-        autoMove.mul((float)Renderer.frameTimeRatio);
+        forward.mul(new Vector3f(1,0,1)).normalize(); //Only allow X/Z movement forward
         float dx = (float)Math.cos(angle); //x value of analog stick
         float dy = (float)Math.sin(angle); //y value of analog stick
         Vector3f right = new Vector3f(-forward.z, 0, forward.x); //lol idk why it works
         Vector3f offset = new Vector3f();
         offset.add(right.mul(dx));
-        offset.add(new Vector3f(0, dy, 0));
+        offset.add(new Vector3f(dy).mul(forward));
         offset.normalize();
-        Vector3f trajectory = new Vector3f(offset).mul(magnitude).add(position);
-        if(magnitude <= 0.0f) trajectory = new Vector3f(position); //ignore everything if no analog input
-        trajectory.add(autoMove);
+        trajectory = new Vector3f(offset).mul(magnitude).add(position);
         Vector3f direction = new Vector3f(trajectory).sub(position).normalize();
         angularVector = Utilities.vectorNormToAngularVector(direction, new Vector3f(0,0,1));
+        Generic.gravitateObject(currentScene, this);
+        trajectory.add(velocity.mul((float)Renderer.frameTimeRatio));
         Collision.collisionCheck(currentScene, this, trajectory);
     }
 
@@ -73,6 +83,7 @@ public class PlayerObject extends GameObject
                 addToPath(position.lerp(trajectory, (float)i/(float)steps, offset));
         }
         else addToPath(position); //always add path if current path is 0
+        previousPosition = new Vector3f(position);
         position = trajectory;
     }
 

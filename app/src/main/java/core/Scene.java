@@ -38,6 +38,7 @@ public class Scene
     private Integer BGModelIndex;
     private final int alphaModelIndex = 1;
     public Camera cam = new Camera(new Vector3f(0,0,0), new Vector2f(4.725f, 0), 0.005f, 3.f);//start looking backward (-1.5*pi)
+    public boolean paused = false;
 
     @RequiresApi(api = Build.VERSION_CODES.N)
     public Scene(String[] sceneScript) throws ClassNotFoundException
@@ -54,21 +55,6 @@ public class Scene
                 case "level_model":
                     int levelModelIdx = Integer.parseInt(line[1]);
                     levelModelIndices.add(levelModelIdx);
-                    break;
-                case "model_obj": //'Load obj file as mesh'
-                    /*String[] objFile = AssetLoader.readFileAsText(line[1]);
-                    String[] mtlFile = AssetLoader.readFileAsText(line[2]);
-                    int defaultCollisionType = Integer.parseInt(line[4]);
-                    String[] materialNames = OBJ2Mesh.objGetTextureNames(objFile);
-                    String[] textureFileNames = OBJ2Mesh.objGetTexturePaths(mtlFile, materialNames);
-                    Material[] textures = new Material[textureFileNames.length];
-                    for(int i =0; i<textures.length; i++)
-                        textures[i] = AssetLoader.loadMaterialFromPath(line[3]+textureFileNames[i], materialNames[i], defaultCollisionType); //nonsolid type 0
-                    float scale = 1.0f;
-                    if(line.length > 6) scale = Float.parseFloat(line[6]); //optional scale in script
-                    Mesh newMesh = OBJ2Mesh.convertOBJToMesh(objFile, textures, scale, Float.parseFloat(line[5]), new Vector3f(Shader.lightDirection).mul(-1.0f));
-                    newMesh.loadTexturesIntoGL();
-                    meshes.add(newMesh);*/
                     break;
                 case "mesh32":
                     byte[] mesh32Data = AssetLoader.readFileAsByteArray(line[1]);
@@ -124,7 +110,7 @@ public class Scene
     public LinkedList<GameObject> getObjects() {return objects; }
     public int meshCount() {return models.size();}
 
-    public void drawScene(float[] worldMatrix, int GL_worldMatrixLocation, int GL_alphaTestUniLocation, Vector3f camPosition) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException
+    public void drawScene() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException
     {
         addPendingObjects();
         //PROCESS OBJECTS IN PARALLEL FIRST
@@ -132,11 +118,11 @@ public class Scene
         Shader.updateLightCountInGL();
         //NOW DRAW THE SCENE WITH OBJECTS
         Shader.currentLightCount = 0;
-        GLES30.glUniform1f(GL_alphaTestUniLocation, 0.0f); //alphaTest disable
+        GLES30.glUniform1f(Shader.GL_alphaTestUniLocation, 0.0f); //alphaTest disable
         drawBackground();
         for(int i = 0; i< levelModelIndices.size(); i++) //Draw level models
         {
-            if(i == alphaModelIndex) continue; //Alpha model
+            //if(i == alphaModelIndex) continue; //Alpha model
             getModel(levelModelIndices.get(i)).drawModel();
         }
         GLES30.glEnable(GLES30.GL_DEPTH_TEST);
@@ -145,13 +131,14 @@ public class Scene
         GLES30.glDepthFunc(GLES30.GL_LESS);
         for(GameObject object : objects)
             object.drawObject();
-        if(levelModelIndices.size() > 1) //Alpha level model
+        /*if(levelModelIndices.size() > 1) //Alpha level model
         {
+            Matrix.setIdentityM(Renderer.worldMatrix, 0);
             GLES30.glDisable(GLES30.GL_CULL_FACE);
             getModel(levelModelIndices.get(alphaModelIndex)).drawModel();
             GLES30.glEnable(GLES30.GL_CULL_FACE);
-        }
-        GLES30.glUniform1f(GL_alphaTestUniLocation, 0.1f);
+        }*/
+        GLES30.glUniform1f(Shader.GL_alphaTestUniLocation, 0.1f);
         GarbageCollectionRoutine();
     }
 
